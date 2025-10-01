@@ -1,0 +1,10 @@
+# Flask web framework
+Flask==3.0.0
+
+# Jinja2 templating engine (installed with Flask, but pinned for clarity)
+Jinja2==3.1.2
+
+# Werkzeug WSGI library (installed with Flask)
+Werkzeug==3.0.1
+
+# Python standard library includes ipaddress, no external dependency needed

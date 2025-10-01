@@ -1,0 +1,1643 @@
+    1 |
+    2 |Building configuration...
+    3 |
+    4 |Current configuration : 52412 bytes
+    5 |!
+    6 |! Last configuration change at 11:09:34 UTC Mon Sep 29 2025 by stk-cisco-ssh
+    7 |! NVRAM config last updated at 11:09:45 UTC Mon Sep 29 2025 by stk-cisco-ssh
+    8 |!
+    9 |version 17.12
+   10 |service timestamps debug datetime msec
+   11 |service timestamps log datetime msec
+   12 |service password-encryption
+   13 |platform punt-keepalive disable-kernel-core
+   14 |!
+   15 |hostname stk-bxl-bn-villa
+   16 |!
+   17 |!
+   18 |vrf definition Campus_VN
+   19 | rd 1:4099
+   20 | !
+   21 | address-family ipv4
+   22 |  route-target export 1:4099
+   23 |  route-target import 1:4099
+   24 | exit-address-family
+   25 |!
+   26 |vrf definition Mgmt-vrf
+   27 | !
+   28 | address-family ipv4
+   29 | exit-address-family
+   30 | !
+   31 | address-family ipv6
+   32 | exit-address-family
+   33 |!
+   34 |aaa new-model
+   35 |!
+   36 |!
+   37 |aaa group server radius dnac-client-radius-group
+   38 | server name dnac-radius_10.1.136.151
+   39 | server name dnac-radius_10.1.136.152
+   40 | ip radius source-interface Loopback0
+   41 |!
+   42 |aaa group server radius dnac-network-radius-group
+   43 | server name dnac-radius_10.1.136.151
+   44 | server name dnac-radius_10.1.136.152
+   45 | ip radius source-interface Loopback0
+   46 |!
+   47 |aaa authentication login default local
+   48 |aaa authentication login dnac-cts-list group dnac-client-radius-group local
+   49 |aaa authentication login VTY_authen group dnac-network-radius-group local
+   50 |aaa authentication dot1x default group dnac-client-radius-group
+   51 |aaa authorization exec default local 
+   52 |aaa authorization exec VTY_author group dnac-network-radius-group local if-authenticated 
+   53 |aaa authorization network default group dnac-client-radius-group 
+   54 |aaa authorization network dnac-cts-list group dnac-client-radius-group 
+   55 |aaa accounting update newinfo periodic 2880
+   56 |aaa accounting identity default start-stop group dnac-client-radius-group
+   57 |aaa accounting exec default start-stop group dnac-network-radius-group
+   58 |!
+   59 |!
+   60 |aaa server radius dynamic-author
+   61 | client 10.1.136.151 server-key 7 xxxxxxxx
+   62 | client 10.1.136.152 server-key 7 xxxxxxxx
+   63 |!
+   64 |aaa session-id common
+   65 |boot system bootflash:packages.conf
+   66 |!
+   67 |ip multicast-routing 
+   68 |ip name-server 10.190.32.132 10.190.44.92
+   69 |ip domain lookup source-interface Loopback0
+   70 |ip domain name stk.bayern.de
+   71 |!
+   72 |!
+   73 |!
+   74 |ip dhcp snooping vlan 10-11
+   75 | login xxxxxx
+   76 |vtp mode transparent
+   77 |!
+   78 |!
+   79 |!
+   80 |!
+   81 |!
+   82 |!
+   83 |!
+   84 |mpls label mode all-vrfs protocol all-afs per-vrf
+   85 |!
+   86 |access-session mac-move deny
+   87 |!
+   88 |crypto pki xxxxxxx
+   89 | enrollment pkcs12
+   90 | revocation-check crl
+   91 | hash sha256
+   92 |!
+   93 |crypto pki xxxxxxx
+   94 | enrollment selfsigned
+   95 | subject-name xxxxxxxx
+   96 | revocation-check none
+   97 | rsakeypair TP-self-signed- xxxxxxxx
+   98 | hash sha256
+   99 |!
+  100 |crypto pki xxxxxxx
+  101 | enrollment mode ra
+  102 | enrollment terminal
+  103 | usage ssl-client
+  104 | revocation-check crl none
+  105 | hash sha256
+  106 |!
+  107 |crypto pki xxxxxxx
+  108 | enrollment url http://10.1.136.141:80/ejbca/publicweb/apply/scep/sdnscep
+  109 | fqdn stk-bxl-bn-villa
+  110 | subject-name xxxxxxxx
+  111 | revocation-check crl
+  112 | rsakeypair xxxxxxxx
+  113 | auto-enroll 80 regenerate
+  114 | hash sha256
+  115 |!
+  116 |!
+  117 |crypto pki certificate chain xxxxxxx
+  118 | certificate ca xxxxxxxx
+  119 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  120 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  121 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  122 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  123 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  124 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  125 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  126 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  127 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  128 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  129 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  130 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  131 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  132 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  133 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  134 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  135 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  136 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  137 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  138 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  139 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  140 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  141 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  142 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  143 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  144 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  145 |quit
+  146 |crypto pki certificate chain xxxxxxx
+  147 | certificate self-signed xxxxxxxx
+  148 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  149 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  150 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  151 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  152 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  153 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  154 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  155 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  156 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  157 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  158 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  159 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  160 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  161 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  162 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  163 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  164 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  165 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  166 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  167 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  168 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  169 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  170 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  171 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  172 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  173 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  174 |quit
+  175 |crypto pki certificate chain xxxxxxx
+  176 | certificate ca xxxxxxxx
+  177 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  178 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  179 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  180 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  181 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  182 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  183 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  184 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  185 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  186 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  187 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  188 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  189 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  190 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  191 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  192 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  193 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  194 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  195 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  196 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  197 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  198 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  199 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  200 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  201 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  202 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  203 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  204 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  205 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  206 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  207 |quit
+  208 |crypto pki certificate chain xxxxxxx
+  209 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  210 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  211 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  212 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  213 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  214 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  215 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  216 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  217 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  218 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  219 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  220 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  221 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  222 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  223 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  224 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  225 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  226 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  227 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  228 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  229 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  230 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  231 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  232 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  233 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  234 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  235 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  236 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  237 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  238 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  239 |quit
+  240 | certificate ca xxxxxxxx
+  241 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  242 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  243 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  244 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  245 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  246 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  247 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  248 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  249 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  250 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  251 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  252 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  253 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  254 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  255 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  256 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  257 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  258 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  259 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  260 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  261 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  262 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  263 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  264 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  265 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  266 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  267 |quit
+  268 |!
+  269 |cts authorization list dnac-cts-list
+  270 |!
+  271 |license boot level network-advantage addon dna-advantage
+  272 |service-template DEFAULT_LINKSEC_POLICY_MUST_SECURE
+  273 | linksec policy must-secure
+  274 |service-template DEFAULT_LINKSEC_POLICY_SHOULD_SECURE
+  275 | linksec policy should-secure
+  276 |service-template DEFAULT_CRITICAL_VOICE_TEMPLATE
+  277 | voice vlan
+  278 |service-template DEFAULT_CRITICAL_DATA_TEMPLATE
+  279 |service-template webauth-global-inactive
+  280 | inactivity-timer 3600 
+  281 |memory free low-watermark processor 287467
+  282 |!
+  283 |system mtu 9100
+  284 |diagnostic bootup level minimal
+  285 |!
+  286 |spanning-tree mode rapid-pvst
+  287 |spanning-tree extend system-id
+  288 |spanning-tree vlan 1-4094 priority 24576
+  289 |!
+  290 |!
+  291 |!
+  292 |!
+  293 |username stk-cisco-ssh privilege 15 secret xxxxxx 
+  294 |!
+  295 |redundancy
+  296 |crypto engine compliance shield disable
+  297 |!
+  298 |!
+  299 |!
+  300 |!
+  301 |!
+  302 |transceiver type all
+  303 | monitoring
+  304 |!
+  305 |vlan 10
+  306 | name TestWired
+  307 |!
+  308 |vlan 11
+  309 | name TestWireless
+  310 |!
+  311 |vlan 70
+  312 | name servernetz
+  313 |!
+  314 |vlan 3700
+  315 | name 3700
+  316 |!
+  317 |vlan 3701
+  318 | name 3701
+  319 |!
+  320 |vlan 3702
+  321 | name 3702
+  322 |!
+  323 |vlan 3703
+  324 | name 3703
+  325 |!
+  326 |!
+  327 |class-map match-any system-cpp-police-ewlc-control
+  328 |  description EWLC Control 
+  329 |class-map match-any system-cpp-police-topology-control
+  330 |  description Topology control
+  331 |class-map match-any system-cpp-police-sw-forward
+  332 |  description Sw forwarding, L2 LVX data packets, LOGGING, Transit Traffic
+  333 |class-map match-any system-cpp-default
+  334 |  description EWLC Data, Inter FED Traffic 
+  335 |class-map match-any system-cpp-police-sys-data
+  336 |  description Openflow, Exception, EGR Exception, NFL Sampled Data, RPF Failed
+  337 |class-map match-any system-cpp-police-punt-webauth
+  338 |  description Punt Webauth
+  339 |class-map match-any system-cpp-police-l2lvx-control
+  340 |  description L2 LVX control packets
+  341 |class-map match-any system-cpp-police-forus
+  342 |  description Forus Address resolution and Forus traffic
+  343 |class-map match-any system-cpp-police-multicast-end-station
+  344 |  description MCAST END STATION
+  345 |class-map match-any system-cpp-police-high-rate-app
+  346 |  description High Rate Applications 
+  347 |class-map match-any system-cpp-police-multicast
+  348 |  description MCAST Data
+  349 |class-map match-any system-cpp-police-l2-control
+  350 |  description L2 control
+  351 |class-map match-any system-cpp-police-dot1x-auth
+  352 |  description DOT1X Auth
+  353 |class-map match-any system-cpp-police-data
+  354 |  description ICMP redirect, ICMP_GEN and BROADCAST
+  355 |class-map match-any system-cpp-police-stackwise-virt-control
+  356 |  description Stackwise Virtual OOB
+  357 |class-map match-any non-client-nrt-class
+  358 |class-map match-any system-cpp-police-routing-control
+  359 |  description Routing control and Low Latency
+  360 |class-map match-any system-cpp-police-protocol-snooping
+  361 |  description Protocol snooping
+  362 |class-map match-any system-cpp-police-dhcp-snooping
+  363 |  description DHCP snooping
+  364 |class-map match-any system-cpp-police-ios-routing
+  365 |  description L2 control, Topology control, Routing control, Low Latency
+  366 |class-map match-any system-cpp-police-system-critical
+  367 |  description System Critical and Gold Pkt
+  368 |class-map match-any system-cpp-police-ios-feature
+  369 |  description ICMPGEN,BROADCAST,ICMP,L2LVXCntrl,ProtoSnoop,PuntWebauth,MCASTData,Transit,DOT1XAuth,Swfwd,LOGGING,L2LVXData,ForusTraffic,ForusARP,McastEndStn,Openflow,Exception,EGRExcption,NflSampled,RpfFailed
+  370 |!
+  371 |!
+  372 |policy-map system-cpp-policy
+  373 |!
+  374 |! 
+  375 |!
+  376 |!
+  377 |!
+  378 |!
+  379 |!
+  380 |!
+  381 |!
+  382 |!
+  383 |!
+  384 |!
+  385 |interface Loopback0
+  386 | description Fabric Node Router ID
+  387 | ip address 10.5.80.128 255.255.255.255
+  388 | ip pim sparse-mode
+  389 | ip router isis 
+  390 | clns mtu 1492
+  391 |!
+  392 |interface Loopback1021
+  393 | description Loopback Border
+  394 | ip address 10.5.82.129 255.255.255.255
+  395 |!
+  396 |interface Loopback60000
+  397 | ip address 10.5.80.129 255.255.255.255
+  398 | ip pim sparse-mode
+  399 | ip router isis 
+  400 |!
+  401 |interface LISP0
+  402 |!
+  403 |interface LISP0.4097
+  404 |!
+  405 |interface LISP0.4099
+  406 | vrf forwarding Campus_VN
+  407 |!
+  408 |interface L2LISP0
+  409 |!
+  410 |interface L2LISP0.8189
+  411 |!
+  412 |interface L2LISP0.8190
+  413 |!
+  414 |interface GigabitEthernet0/0
+  415 | vrf forwarding Mgmt-vrf
+  416 | no ip address
+  417 | shutdown
+  418 | negotiation auto
+  419 |!
+  420 |interface TwentyFiveGigE1/0/1
+  421 | description Fabric Physical Link
+  422 | no switchport
+  423 | dampening
+  424 | ip address 10.5.80.166 255.255.255.254
+  425 | no ip redirects
+  426 | ip pim sparse-mode
+  427 | ip router isis 
+  428 | load-interval 30
+  429 | no cts role-based enforcement
+  430 | bfd interval 250 min_rx 250 multiplier 3
+  431 | clns mtu 1492
+  432 | isis network point-to-point 
+  433 |!
+  434 |interface TwentyFiveGigE1/0/2
+  435 | description Fabric Physical Link
+  436 | no switchport
+  437 | dampening
+  438 | ip address 10.5.80.152 255.255.255.254
+  439 | no ip redirects
+  440 | ip pim sparse-mode
+  441 | ip router isis 
+  442 | load-interval 30
+  443 | no cts role-based enforcement
+  444 | bfd interval 250 min_rx 250 multiplier 3
+  445 | clns mtu 1492
+  446 | isis network point-to-point 
+  447 |!
+  448 |interface TwentyFiveGigE1/0/3
+  449 | description Fabric Physical Link
+  450 | no switchport
+  451 | dampening
+  452 | ip address 10.5.80.164 255.255.255.254
+  453 | no ip redirects
+  454 | ip pim sparse-mode
+  455 | ip router isis 
+  456 | load-interval 30
+  457 | no cts role-based enforcement
+  458 | bfd interval 250 min_rx 250 multiplier 3
+  459 | clns mtu 1492
+  460 | isis network point-to-point 
+  461 |!
+  462 |interface TwentyFiveGigE1/0/4
+  463 | description Fabric Physical Link
+  464 | no switchport
+  465 | dampening
+  466 | ip address 10.5.80.146 255.255.255.254
+  467 | no ip redirects
+  468 | ip pim sparse-mode
+  469 | ip router isis 
+  470 | load-interval 30
+  471 | no cts role-based enforcement
+  472 | bfd interval 250 min_rx 250 multiplier 3
+  473 | clns mtu 1492
+  474 | isis network point-to-point 
+  475 |!
+  476 |interface TwentyFiveGigE1/0/5
+  477 | description Fabric Physical Link
+  478 | no switchport
+  479 | dampening
+  480 | ip address 10.5.80.142 255.255.255.254
+  481 | no ip redirects
+  482 | ip pim sparse-mode
+  483 | ip router isis 
+  484 | load-interval 30
+  485 | no cts role-based enforcement
+  486 | bfd interval 250 min_rx 250 multiplier 3
+  487 | clns mtu 1492
+  488 | isis network point-to-point 
+  489 |!
+  490 |interface TwentyFiveGigE1/0/6
+  491 | description Fabric Physical Link
+  492 | no switchport
+  493 | dampening
+  494 | ip address 10.5.80.136 255.255.255.254
+  495 | no ip redirects
+  496 | ip pim sparse-mode
+  497 | ip router isis 
+  498 | load-interval 30
+  499 | no cts role-based enforcement
+  500 | bfd interval 250 min_rx 250 multiplier 3
+  501 | clns mtu 1492
+  502 | isis network point-to-point 
+  503 |!
+  504 |interface TwentyFiveGigE1/0/7
+  505 | description Fabric Physical Link
+  506 | no switchport
+  507 | dampening
+  508 | ip address 10.5.80.130 255.255.255.254
+  509 | no ip redirects
+  510 | ip pim sparse-mode
+  511 | ip router isis 
+  512 | load-interval 30
+  513 | no cts role-based enforcement
+  514 | bfd interval 250 min_rx 250 multiplier 3
+  515 | clns mtu 1492
+  516 | isis network point-to-point 
+  517 |!
+  518 |interface TwentyFiveGigE1/0/8
+  519 | description Fabric Physical Link
+  520 | no switchport
+  521 | dampening
+  522 | ip address 10.5.80.158 255.255.255.254
+  523 | no ip redirects
+  524 | ip pim sparse-mode
+  525 | ip router isis 
+  526 | load-interval 30
+  527 | no cts role-based enforcement
+  528 | bfd interval 250 min_rx 250 multiplier 3
+  529 | clns mtu 1492
+  530 | isis network point-to-point 
+  531 |!
+  532 |interface TwentyFiveGigE1/0/9
+  533 | description Fabric Physical Link
+  534 | no switchport
+  535 | dampening
+  536 | ip address 10.5.80.176 255.255.255.254
+  537 | no ip redirects
+  538 | ip pim sparse-mode
+  539 | ip router isis 
+  540 | load-interval 30
+  541 | no cts role-based enforcement
+  542 | bfd interval 250 min_rx 250 multiplier 3
+  543 | clns mtu 1492
+  544 | isis network point-to-point 
+  545 |!
+  546 |interface TwentyFiveGigE1/0/10
+  547 | description Fabric Physical Link
+  548 | no switchport
+  549 | dampening
+  550 | ip address 10.5.80.172 255.255.255.254
+  551 | no ip redirects
+  552 | ip pim sparse-mode
+  553 | ip router isis 
+  554 | load-interval 30
+  555 | no cts role-based enforcement
+  556 | bfd interval 250 min_rx 250 multiplier 3
+  557 | clns mtu 1492
+  558 | isis network point-to-point 
+  559 |!
+  560 |interface TwentyFiveGigE1/0/11
+  561 | description Fabric Physical Link
+  562 | no switchport
+  563 | dampening
+  564 | ip address 10.5.80.170 255.255.255.254
+  565 | no ip redirects
+  566 | ip pim sparse-mode
+  567 | ip router isis 
+  568 | load-interval 30
+  569 | no cts role-based enforcement
+  570 | bfd interval 250 min_rx 250 multiplier 3
+  571 | clns mtu 1492
+  572 | isis network point-to-point 
+  573 |!
+  574 |interface TwentyFiveGigE1/0/12
+  575 | description Fabric Physical Link
+  576 | no switchport
+  577 | dampening
+  578 | ip address 10.5.80.134 255.255.255.254
+  579 | no ip redirects
+  580 | ip pim sparse-mode
+  581 | ip router isis 
+  582 | load-interval 30
+  583 | no cts role-based enforcement
+  584 | bfd interval 250 min_rx 250 multiplier 3
+  585 | clns mtu 1492
+  586 | isis network point-to-point 
+  587 |!
+  588 |interface TwentyFiveGigE1/0/13
+  589 | description Fabric Physical Link
+  590 | no switchport
+  591 | dampening
+  592 | ip address 10.5.80.148 255.255.255.254
+  593 | no ip redirects
+  594 | ip pim sparse-mode
+  595 | ip router isis 
+  596 | load-interval 30
+  597 | no cts role-based enforcement
+  598 | bfd interval 250 min_rx 250 multiplier 3
+  599 | clns mtu 1492
+  600 | isis network point-to-point 
+  601 |!
+  602 |interface TwentyFiveGigE1/0/14
+  603 | description Fabric Physical Link
+  604 | no switchport
+  605 | dampening
+  606 | ip address 10.5.80.154 255.255.255.254
+  607 | no ip redirects
+  608 | ip pim sparse-mode
+  609 | ip router isis 
+  610 | load-interval 30
+  611 | no cts role-based enforcement
+  612 | bfd interval 250 min_rx 250 multiplier 3
+  613 | clns mtu 1492
+  614 | isis network point-to-point 
+  615 |!
+  616 |interface TwentyFiveGigE1/0/15
+  617 | description Fabric Physical Link
+  618 | no switchport
+  619 | dampening
+  620 | ip address 10.5.80.140 255.255.255.254
+  621 | no ip redirects
+  622 | ip pim sparse-mode
+  623 | ip router isis 
+  624 | load-interval 30
+  625 | no cts role-based enforcement
+  626 | bfd interval 250 min_rx 250 multiplier 3
+  627 | clns mtu 1492
+  628 | isis network point-to-point 
+  629 |!
+  630 |interface TwentyFiveGigE1/0/16
+  631 | description Fabric Physical Link
+  632 | no switchport
+  633 | dampening
+  634 | ip address 10.5.80.160 255.255.255.254
+  635 | no ip redirects
+  636 | ip pim sparse-mode
+  637 | ip router isis 
+  638 | load-interval 30
+  639 | no cts role-based enforcement
+  640 | bfd interval 250 min_rx 250 multiplier 3
+  641 | clns mtu 1492
+  642 | isis network point-to-point 
+  643 |!
+  644 |interface TwentyFiveGigE1/0/17
+  645 | description Fabric Physical Link
+  646 | no switchport
+  647 | dampening
+  648 | ip address 10.5.81.8 255.255.255.254
+  649 | no ip redirects
+  650 | ip pim sparse-mode
+  651 | ip router isis 
+  652 | load-interval 30
+  653 | no cts role-based enforcement
+  654 | bfd interval 250 min_rx 250 multiplier 3
+  655 | clns mtu 1492
+  656 | isis network point-to-point 
+  657 |!
+  658 |interface TwentyFiveGigE1/0/18
+  659 | description Fabric Physical Link
+  660 | no switchport
+  661 | dampening
+  662 | ip address 10.5.80.228 255.255.255.254
+  663 | no ip redirects
+  664 | ip pim sparse-mode
+  665 | ip router isis 
+  666 | load-interval 30
+  667 | no cts role-based enforcement
+  668 | bfd interval 250 min_rx 250 multiplier 3
+  669 | clns mtu 1492
+  670 | isis network point-to-point 
+  671 |!
+  672 |interface TwentyFiveGigE1/0/19
+  673 | description Fabric Physical Link
+  674 | no switchport
+  675 | dampening
+  676 | ip address 10.5.80.250 255.255.255.254
+  677 | no ip redirects
+  678 | ip pim sparse-mode
+  679 | ip router isis 
+  680 | load-interval 30
+  681 | no cts role-based enforcement
+  682 | bfd interval 250 min_rx 250 multiplier 3
+  683 | clns mtu 1492
+  684 | isis network point-to-point 
+  685 |!
+  686 |interface TwentyFiveGigE1/0/20
+  687 | description Fabric Physical Link
+  688 | no switchport
+  689 | dampening
+  690 | ip address 10.5.81.2 255.255.255.254
+  691 | no ip redirects
+  692 | ip pim sparse-mode
+  693 | ip router isis 
+  694 | load-interval 30
+  695 | no cts role-based enforcement
+  696 | bfd interval 250 min_rx 250 multiplier 3
+  697 | clns mtu 1492
+  698 | isis network point-to-point 
+  699 |!
+  700 |interface TwentyFiveGigE1/0/21
+  701 | description Fabric Physical Link
+  702 | no switchport
+  703 | dampening
+  704 | ip address 10.5.81.12 255.255.255.254
+  705 | no ip redirects
+  706 | ip pim sparse-mode
+  707 | ip router isis 
+  708 | load-interval 30
+  709 | no cts role-based enforcement
+  710 | bfd interval 250 min_rx 250 multiplier 3
+  711 | clns mtu 1492
+  712 | isis network point-to-point 
+  713 |!
+  714 |interface TwentyFiveGigE1/0/22
+  715 | description Fabric Physical Link
+  716 | no switchport
+  717 | dampening
+  718 | ip address 10.5.80.232 255.255.255.254
+  719 | no ip redirects
+  720 | ip pim sparse-mode
+  721 | ip router isis 
+  722 | load-interval 30
+  723 | no cts role-based enforcement
+  724 | bfd interval 250 min_rx 250 multiplier 3
+  725 | clns mtu 1492
+  726 | isis network point-to-point 
+  727 |!
+  728 |interface TwentyFiveGigE1/0/23
+  729 | description Fabric Physical Link
+  730 | no switchport
+  731 | dampening
+  732 | ip address 10.5.80.238 255.255.255.254
+  733 | no ip redirects
+  734 | ip pim sparse-mode
+  735 | ip router isis 
+  736 | load-interval 30
+  737 | no cts role-based enforcement
+  738 | bfd interval 250 min_rx 250 multiplier 3
+  739 | clns mtu 1492
+  740 | isis network point-to-point 
+  741 |!
+  742 |interface TwentyFiveGigE1/0/24
+  743 | description Fabric Physical Link
+  744 | no switchport
+  745 | dampening
+  746 | ip address 10.5.80.244 255.255.255.254
+  747 | no ip redirects
+  748 | ip pim sparse-mode
+  749 | ip router isis 
+  750 | load-interval 30
+  751 | no cts role-based enforcement
+  752 | bfd interval 250 min_rx 250 multiplier 3
+  753 | clns mtu 1492
+  754 | isis network point-to-point 
+  755 |!
+  756 |interface TwentyFiveGigE1/0/25
+  757 | description Fabric Physical Link
+  758 | no switchport
+  759 | dampening
+  760 | ip address 10.5.81.6 255.255.255.254
+  761 | no ip redirects
+  762 | ip pim sparse-mode
+  763 | ip router isis 
+  764 | load-interval 30
+  765 | no cts role-based enforcement
+  766 | bfd interval 250 min_rx 250 multiplier 3
+  767 | clns mtu 1492
+  768 | isis network point-to-point 
+  769 |!
+  770 |interface TwentyFiveGigE1/0/26
+  771 | description Fabric Physical Link
+  772 | no switchport
+  773 | dampening
+  774 | ip address 10.5.80.252 255.255.255.254
+  775 | no ip redirects
+  776 | ip pim sparse-mode
+  777 | ip router isis 
+  778 | load-interval 30
+  779 | no cts role-based enforcement
+  780 | bfd interval 250 min_rx 250 multiplier 3
+  781 | clns mtu 1492
+  782 | isis network point-to-point 
+  783 |!
+  784 |interface TwentyFiveGigE1/0/27
+  785 | description Fabric Physical Link
+  786 | no switchport
+  787 | dampening
+  788 | ip address 10.5.80.226 255.255.255.254
+  789 | no ip redirects
+  790 | ip pim sparse-mode
+  791 | ip router isis 
+  792 | load-interval 30
+  793 | no cts role-based enforcement
+  794 | bfd interval 250 min_rx 250 multiplier 3
+  795 | clns mtu 1492
+  796 | isis network point-to-point 
+  797 |!
+  798 |interface TwentyFiveGigE1/0/28
+  799 | description Fabric Physical Link
+  800 | no switchport
+  801 | dampening
+  802 | ip address 10.5.80.234 255.255.255.254
+  803 | no ip redirects
+  804 | ip pim sparse-mode
+  805 | ip router isis 
+  806 | load-interval 30
+  807 | no cts role-based enforcement
+  808 | bfd interval 250 min_rx 250 multiplier 3
+  809 | clns mtu 1492
+  810 | isis network point-to-point 
+  811 |!
+  812 |interface TwentyFiveGigE1/0/29
+  813 | description Fabric Physical Link
+  814 | no switchport
+  815 | dampening
+  816 | ip address 10.5.81.0 255.255.255.254
+  817 | no ip redirects
+  818 | ip pim sparse-mode
+  819 | ip router isis 
+  820 | load-interval 30
+  821 | no cts role-based enforcement
+  822 | bfd interval 250 min_rx 250 multiplier 3
+  823 | clns mtu 1492
+  824 | isis network point-to-point 
+  825 |!
+  826 |interface TwentyFiveGigE1/0/30
+  827 | description Fabric Physical Link
+  828 | no switchport
+  829 | dampening
+  830 | ip address 10.5.80.246 255.255.255.254
+  831 | no ip redirects
+  832 | ip pim sparse-mode
+  833 | ip router isis 
+  834 | load-interval 30
+  835 | no cts role-based enforcement
+  836 | bfd interval 250 min_rx 250 multiplier 3
+  837 | clns mtu 1492
+  838 | isis network point-to-point 
+  839 |!
+  840 |interface TwentyFiveGigE1/0/31
+  841 | description Fabric Physical Link
+  842 | no switchport
+  843 | dampening
+  844 | ip address 10.5.80.222 255.255.255.254
+  845 | no ip redirects
+  846 | ip pim sparse-mode
+  847 | ip router isis 
+  848 | load-interval 30
+  849 | no cts role-based enforcement
+  850 | bfd interval 250 min_rx 250 multiplier 3
+  851 | clns mtu 1492
+  852 | isis network point-to-point 
+  853 |!
+  854 |interface TwentyFiveGigE1/0/32
+  855 | description Fabric Physical Link
+  856 | no switchport
+  857 | dampening
+  858 | ip address 10.5.80.220 255.255.255.254
+  859 | no ip redirects
+  860 | ip pim sparse-mode
+  861 | ip router isis 
+  862 | load-interval 30
+  863 | no cts role-based enforcement
+  864 | bfd interval 250 min_rx 250 multiplier 3
+  865 | clns mtu 1492
+  866 | isis network point-to-point 
+  867 |!
+  868 |interface TwentyFiveGigE1/0/33
+  869 | description Fabric Physical Link
+  870 | no switchport
+  871 | dampening
+  872 | ip address 10.5.80.240 255.255.255.254
+  873 | no ip redirects
+  874 | ip pim sparse-mode
+  875 | ip router isis 
+  876 | load-interval 30
+  877 | no cts role-based enforcement
+  878 | bfd interval 250 min_rx 250 multiplier 3
+  879 | clns mtu 1492
+  880 | isis network point-to-point 
+  881 |!
+  882 |interface TwentyFiveGigE1/0/34
+  883 |!
+  884 |interface TwentyFiveGigE1/0/35
+  885 |!
+  886 |interface TwentyFiveGigE1/0/36
+  887 |!
+  888 |interface TwentyFiveGigE1/0/37
+  889 |!
+  890 |interface TwentyFiveGigE1/0/38
+  891 |!
+  892 |interface TwentyFiveGigE1/0/39
+  893 |!
+  894 |interface TwentyFiveGigE1/0/40
+  895 |!
+  896 |interface TwentyFiveGigE1/0/41
+  897 |!
+  898 |interface TwentyFiveGigE1/0/42
+  899 |!
+  900 |interface TwentyFiveGigE1/0/43
+  901 |!
+  902 |interface TwentyFiveGigE1/0/44
+  903 |!
+  904 |interface TwentyFiveGigE1/0/45
+  905 |!
+  906 |interface TwentyFiveGigE1/0/46
+  907 |!
+  908 |interface TwentyFiveGigE1/0/47
+  909 |!
+  910 |interface TwentyFiveGigE1/0/48
+  911 |!
+  912 |interface HundredGigE1/0/49
+  913 | description Fabric Physical Link
+  914 | no switchport
+  915 | dampening
+  916 | ip address 10.5.80.3 255.255.255.254
+  917 | no ip redirects
+  918 | ip pim sparse-mode
+  919 | ip router isis 
+  920 | load-interval 30
+  921 | no cts role-based enforcement
+  922 | bfd interval 250 min_rx 250 multiplier 3
+  923 | clns mtu 1492
+  924 | isis network point-to-point 
+  925 |!
+  926 |interface HundredGigE1/0/50
+  927 | switchport mode trunk
+  928 |!
+  929 |interface HundredGigE1/0/51
+  930 | switchport mode trunk
+  931 |!
+  932 |interface HundredGigE1/0/52
+  933 |!
+  934 |interface Bluetooth0/4
+  935 | vrf forwarding Mgmt-vrf
+  936 | no ip address
+  937 | shutdown
+  938 | negotiation auto
+  939 | enable
+  940 |!
+  941 |interface Vlan1
+  942 | no ip address
+  943 |!
+  944 |interface Vlan10
+  945 | description Configured from Catalyst Center
+  946 | mac-address 0000.0c9f.f5a8
+  947 | vrf forwarding Campus_VN
+  948 | ip address 10.5.84.129 255.255.255.128
+  949 | ip helper-address 10.190.32.94
+  950 | ip helper-address 10.190.44.12
+  951 | no ip redirects
+  952 | ip directed-broadcast
+  953 | ip route-cache same-interface
+  954 | no lisp mobility liveness test
+  955 | lisp mobility TestWired-IPV4
+  956 | no autostate
+  957 |!
+  958 |interface Vlan11
+  959 | description Configured from Catalyst Center
+  960 | mac-address 0000.0c9f.f1bf
+  961 | vrf forwarding Campus_VN
+  962 | ip address 10.5.84.1 255.255.255.128
+  963 | ip helper-address 10.190.32.94
+  964 | ip helper-address 10.190.44.12
+  965 | no ip redirects
+  966 | ip directed-broadcast
+  967 | ip route-cache same-interface
+  968 | no lisp mobility liveness test
+  969 | lisp mobility TestWireless-IPV4
+  970 | no autostate
+  971 |!
+  972 |interface Vlan3700
+  973 | description vrf interface to External router
+  974 | vrf forwarding Campus_VN
+  975 | ip address 192.168.201.129 255.255.255.252
+  976 | no ip redirects
+  977 | ip network-broadcast
+  978 | ip route-cache same-interface
+  979 | bfd interval 100 min_rx 100 multiplier 3
+  980 |!
+  981 |interface Vlan3701
+  982 | description vrf interface to External router
+  983 | ip address 192.168.201.133 255.255.255.252
+  984 | no ip redirects
+  985 | ip route-cache same-interface
+  986 | bfd interval 100 min_rx 100 multiplier 3
+  987 |!
+  988 |interface Vlan3702
+  989 | description vrf interface to External router
+  990 | vrf forwarding Campus_VN
+  991 | ip address 192.168.201.137 255.255.255.252
+  992 | no ip redirects
+  993 | ip network-broadcast
+  994 | ip route-cache same-interface
+  995 | bfd interval 100 min_rx 100 multiplier 3
+  996 |!
+  997 |interface Vlan3703
+  998 | description vrf interface to External router
+  999 | ip address 192.168.201.141 255.255.255.252
+ 1000 | no ip redirects
+ 1001 | ip route-cache same-interface
+ 1002 | bfd interval 100 min_rx 100 multiplier 3
+ 1003 |!
+ 1004 |router lisp
+ 1005 | domain-id 405865304
+ 1006 | multihoming-id 856
+ 1007 | locator-table default
+ 1008 | locator-set DEFAULT_ETR_LOCATOR
+ 1009 |  IPv4-interface Loopback0 priority 10 weight 10
+ 1010 |  exit-locator-set
+ 1011 | !
+ 1012 | locator-set rloc_a289ca6c-9cd7-4731-b363-5ce1abd3e246
+ 1013 |  IPv4-interface Loopback0 priority 10 weight 10
+ 1014 |  auto-discover-rlocs
+ 1015 |  exit-locator-set
+ 1016 | !
+ 1017 | locator default-set rloc_a289ca6c-9cd7-4731-b363-5ce1abd3e246
+ 1018 | service ipv4
+ 1019 |  encapsulation vxlan
+ 1020 |  map-cache publications
+ 1021 |  import publication publisher 10.5.80.128
+ 1022 |  import publication publisher 10.5.80.178
+ 1023 |  itr map-resolver 10.5.80.128
+ 1024 |  itr map-resolver 10.5.80.178
+ 1025 |  etr map-server 10.5.80.128 key 7 1150485516175A59067F7B707C67332443 domain-id 405865304
+ 1026 |  etr map-server 10.5.80.128 proxy-reply
+ 1027 |  etr map-server 10.5.80.178 key 7 1150485516175A59067F7B707C67332443 domain-id 405865304
+ 1028 |  etr map-server 10.5.80.178 proxy-reply
+ 1029 |  etr
+ 1030 |  sgt
+ 1031 |  route-export publications
+ 1032 |  distance publications 250
+ 1033 |  no map-cache away-eids send-map-request
+ 1034 |  proxy-etr
+ 1035 |  proxy-itr 10.5.80.128
+ 1036 |  map-server
+ 1037 |  map-resolver
+ 1038 |  exit-service-ipv4
+ 1039 | !
+ 1040 | service ethernet
+ 1041 |  itr map-resolver 10.5.80.128
+ 1042 |  itr map-resolver 10.5.80.178
+ 1043 |  itr
+ 1044 |  etr map-server 10.5.80.128 key 7 1150485516175A59067F7B707C67332443
+ 1045 |  etr map-server 10.5.80.128 proxy-reply
+ 1046 |  etr map-server 10.5.80.178 key 7 1150485516175A59067F7B707C67332443
+ 1047 |  etr map-server 10.5.80.178 proxy-reply
+ 1048 |  etr
+ 1049 |  map-server
+ 1050 |  map-resolver
+ 1051 |  exit-service-ethernet
+ 1052 | !
+ 1053 | instance-id 4097
+ 1054 |  remote-rloc-probe on-route-change
+ 1055 |  service ipv4
+ 1056 |   eid-table default
+ 1057 |   database-mapping 192.168.201.132/30 locator-set rloc_a289ca6c-9cd7-4731-b363-5ce1abd3e246
+ 1058 |   database-mapping 192.168.201.140/30 locator-set rloc_a289ca6c-9cd7-4731-b363-5ce1abd3e246
+ 1059 |   map-cache 10.5.82.128/25 map-request
+ 1060 |   exit-service-ipv4
+ 1061 |  !
+ 1062 |  exit-instance-id
+ 1063 | !
+ 1064 | instance-id 4099
+ 1065 |  remote-rloc-probe on-route-change
+ 1066 |  dynamic-eid TestWired-IPV4
+ 1067 |   database-mapping 10.5.84.128/25 locator-set rloc_a289ca6c-9cd7-4731-b363-5ce1abd3e246
+ 1068 |   exit-dynamic-eid
+ 1069 |  !
+ 1070 |  dynamic-eid TestWireless-IPV4
+ 1071 |   database-mapping 10.5.84.0/25 locator-set rloc_a289ca6c-9cd7-4731-b363-5ce1abd3e246
+ 1072 |   exit-dynamic-eid
+ 1073 |  !
+ 1074 |  service ipv4
+ 1075 |   eid-table vrf Campus_VN
+ 1076 |   database-mapping 0.0.0.0/0 locator-set DEFAULT_ETR_LOCATOR default-etr local
+ 1077 |   database-mapping 192.168.201.128/30 locator-set rloc_a289ca6c-9cd7-4731-b363-5ce1abd3e246
+ 1078 |   database-mapping 192.168.201.136/30 locator-set rloc_a289ca6c-9cd7-4731-b363-5ce1abd3e246
+ 1079 |   exit-service-ipv4
+ 1080 |  !
+ 1081 |  exit-instance-id
+ 1082 | !
+ 1083 | instance-id 8189
+ 1084 |  remote-rloc-probe on-route-change
+ 1085 |  service ethernet
+ 1086 |   eid-table vlan 10
+ 1087 |   broadcast-underlay 239.0.17.3
+ 1088 |   flood arp-nd
+ 1089 |   flood unknown-unicast
+ 1090 |   database-mapping mac locator-set rloc_a289ca6c-9cd7-4731-b363-5ce1abd3e246
+ 1091 |   exit-service-ethernet
+ 1092 |  !
+ 1093 |  exit-instance-id
+ 1094 | !
+ 1095 | instance-id 8190
+ 1096 |  remote-rloc-probe on-route-change
+ 1097 |  service ethernet
+ 1098 |   eid-table vlan 11
+ 1099 |   broadcast-underlay 239.0.17.3
+ 1100 |   flood unknown-unicast
+ 1101 |   database-mapping mac locator-set rloc_a289ca6c-9cd7-4731-b363-5ce1abd3e246
+ 1102 |   exit-service-ethernet
+ 1103 |  !
+ 1104 |  exit-instance-id
+ 1105 | !
+ 1106 | map-server rloc members distribute
+ 1107 | site site_uci
+ 1108 |  description map-server configured from Catalyst Center
+ 1109 |  authentication-key 7 xxxxxxxxx
+ 1110 |  eid-record instance-id 4097 0.0.0.0/0 accept-more-specifics
+ 1111 |  eid-record instance-id 4097 10.5.82.128/25 accept-more-specifics
+ 1112 |  eid-record instance-id 4099 0.0.0.0/0 accept-more-specifics
+ 1113 |  eid-record instance-id 4099 10.5.84.0/25 accept-more-specifics
+ 1114 |  eid-record instance-id 4099 10.5.84.128/25 accept-more-specifics
+ 1115 |  eid-record instance-id 8188 any-mac
+ 1116 |  eid-record instance-id 8189 any-mac
+ 1117 |  eid-record instance-id 8190 any-mac
+ 1118 |  allow-locator-default-etr instance-id 4097 ipv4
+ 1119 |  allow-locator-default-etr instance-id 4099 ipv4
+ 1120 |  exit-site
+ 1121 | !
+ 1122 | ipv4 locator reachability exclude-default
+ 1123 | ipv4 source-locator Loopback0
+ 1124 | exit-router-lisp
+ 1125 |!
+ 1126 |router isis
+ 1127 | net 49.0000.5ce1.abd3.e246.00
+ 1128 | is-type level-2-only
+ 1129 | domain-password xxxxxx
+ 1130 | metric-style wide
+ 1131 | log-adjacency-changes
+ 1132 | nsf ietf
+ 1133 | default-information originate
+ 1134 | bfd all-interfaces
+ 1135 |!
+ 1136 |router bgp 64700
+ 1137 | bgp router-id interface Loopback0
+ 1138 | bgp log-neighbor-changes
+ 1139 | bgp graceful-restart
+ 1140 | neighbor 192.168.201.134 remote-as 64701
+ 1141 | neighbor 192.168.201.134 update-source Vlan3701
+ 1142 | neighbor 192.168.201.134 fall-over bfd
+ 1143 | neighbor 192.168.201.142 remote-as 64701
+ 1144 | neighbor 192.168.201.142 update-source Vlan3703
+ 1145 | neighbor 192.168.201.142 fall-over bfd
+ 1146 | !
+ 1147 | address-family ipv4
+ 1148 |  bgp redistribute-internal
+ 1149 |  bgp aggregate-timer 0
+ 1150 |  network 10.5.80.128 mask 255.255.255.255
+ 1151 |  network 10.5.82.129 mask 255.255.255.255
+ 1152 |  network 192.168.201.132 mask 255.255.255.252
+ 1153 |  network 192.168.201.140 mask 255.255.255.252
+ 1154 |  aggregate-address 10.5.82.128 255.255.255.128 summary-only
+ 1155 |  aggregate-address 10.5.80.0 255.255.254.0 summary-only
+ 1156 |  redistribute lisp metric 10 route-map LISP_TO_BGP
+ 1157 |  neighbor 192.168.201.134 activate
+ 1158 |  neighbor 192.168.201.134 send-community both
+ 1159 |  neighbor 192.168.201.134 weight 65535
+ 1160 |  neighbor 192.168.201.134 advertisement-interval 0
+ 1161 |  neighbor 192.168.201.142 activate
+ 1162 |  neighbor 192.168.201.142 send-community both
+ 1163 |  neighbor 192.168.201.142 weight 65535
+ 1164 |  neighbor 192.168.201.142 advertisement-interval 0
+ 1165 | exit-address-family
+ 1166 | !
+ 1167 | address-family ipv4 vrf Campus_VN
+ 1168 |  bgp aggregate-timer 0
+ 1169 |  network 10.5.84.0 mask 255.255.255.128
+ 1170 |  network 10.5.84.128 mask 255.255.255.128
+ 1171 |  network 192.168.201.128 mask 255.255.255.252
+ 1172 |  network 192.168.201.136 mask 255.255.255.252
+ 1173 |  aggregate-address 10.5.84.128 255.255.255.128 summary-only
+ 1174 |  aggregate-address 10.5.84.0 255.255.255.128 summary-only
+ 1175 |  redistribute lisp metric 10 route-map LISP_TO_BGP
+ 1176 |  neighbor 192.168.201.130 remote-as 64701
+ 1177 |  neighbor 192.168.201.130 update-source Vlan3700
+ 1178 |  neighbor 192.168.201.130 fall-over bfd
+ 1179 |  neighbor 192.168.201.130 activate
+ 1180 |  neighbor 192.168.201.130 send-community both
+ 1181 |  neighbor 192.168.201.130 weight 65535
+ 1182 |  neighbor 192.168.201.138 remote-as 64701
+ 1183 |  neighbor 192.168.201.138 update-source Vlan3702
+ 1184 |  neighbor 192.168.201.138 fall-over bfd
+ 1185 |  neighbor 192.168.201.138 activate
+ 1186 |  neighbor 192.168.201.138 send-community both
+ 1187 |  neighbor 192.168.201.138 weight 65535
+ 1188 | exit-address-family
+ 1189 |!
+ 1190 |ip forward-protocol nd
+ 1191 |ip http server
+ 1192 |ip http authentication local
+ 1193 |ip http secure-server
+ 1194 |ip http client source-interface Loopback0
+ 1195 |ip pim rp-address 10.5.80.129
+ 1196 |ip pim register-source Loopback0
+ 1197 |ip pim ssm default
+ 1198 |ip ssh bulk-mode 131072
+ 1199 |ip ssh source-interface Loopback0
+ 1200 |!
+ 1201 |ip community-list 95 permit 955999
+ 1202 |!
+ 1203 |ip access-list extended ACL_WEBAUTH_REDIRECT
+ 1204 | 210 deny ip any host 10.1.136.151
+ 1205 | 220 deny ip any host 10.1.136.152
+ 1206 | 500 permit tcp any any eq www
+ 1207 | 600 permit tcp any any eq 443
+ 1208 | 700 permit tcp any any eq 8443
+ 1209 | 800 deny udp any any eq domain
+ 1210 | 900 deny udp any eq bootpc any eq bootps
+ 1211 |!
+ 1212 |!
+ 1213 |ip prefix-list DENY_0.0.0.0 seq 10 permit 0.0.0.0/0
+ 1214 |!
+ 1215 |ip prefix-list L3HANDOFF_PREFIXES seq 630873688 permit 192.168.201.156/30
+ 1216 |ip prefix-list L3HANDOFF_PREFIXES seq 631021656 permit 192.168.201.152/30
+ 1217 |ip prefix-list L3HANDOFF_PREFIXES seq 631946456 permit 192.168.201.148/30
+ 1218 |ip prefix-list L3HANDOFF_PREFIXES seq 632094424 permit 192.168.201.144/30
+ 1219 |ip prefix-list L3HANDOFF_PREFIXES seq 632242392 permit 192.168.201.140/30
+ 1220 |ip prefix-list L3HANDOFF_PREFIXES seq 633167192 permit 192.168.201.136/30
+ 1221 |ip prefix-list L3HANDOFF_PREFIXES seq 633315160 permit 192.168.201.132/30
+ 1222 |ip prefix-list L3HANDOFF_PREFIXES seq 634239960 permit 192.168.201.128/30
+ 1223 |ip radius source-interface Loopback0 
+ 1224 |logging source-interface Loopback0
+ 1225 |logging host 10.1.136.141
+ 1226 |!
+ 1227 |route-map SET_FABRIC_SUBNET_COMMUNITY permit 5 
+ 1228 | set community 955999
+ 1229 |!
+ 1230 |route-map LISP_TO_BGP permit 15 
+ 1231 | description Set the BGP AS Path to AS Number of BGP Handoff Neighbor
+ 1232 | set as-path tag
+ 1233 |!
+ 1234 |snmp-server group DNACGROUPAuthPriv v3 priv read ALL-VIEW write ALL-VIEW 
+ 1235 |snmp-server view xxxxxxxx
+ 1236 |snmp-server trap-source Loopback0
+ 1237 |snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+ 1238 |snmp-server enable traps flowmon
+ 1239 |snmp-server enable traps entity-perf throughput-notif
+ 1240 |snmp-server enable traps call-home message-send-fail server-fail
+ 1241 |snmp-server enable traps tty
+ 1242 |snmp-server enable traps eigrp
+ 1243 |snmp-server enable traps ospf state-change
+ 1244 |snmp-server enable traps ospf errors
+ 1245 |snmp-server enable traps ospf retransmit
+ 1246 |snmp-server enable traps ospf lsa
+ 1247 |snmp-server enable traps ospf cisco-specific state-change nssa-trans-change
+ 1248 |snmp-server enable traps ospf cisco-specific state-change shamlink interface
+ 1249 |snmp-server enable traps ospf cisco-specific state-change shamlink neighbor
+ 1250 |snmp-server enable traps ospf cisco-specific errors
+ 1251 |snmp-server enable traps ospf cisco-specific retransmit
+ 1252 |snmp-server enable traps ospf cisco-specific lsa
+ 1253 |snmp-server enable traps bfd
+ 1254 |snmp-server enable traps smart-license
+ 1255 |snmp-server enable traps auth-framework sec-violation
+ 1256 |snmp-server enable traps rep
+ 1257 |snmp-server enable traps aaa_server
+ 1258 |snmp-server enable traps memory bufferpeak
+ 1259 |snmp-server enable traps config-copy
+ 1260 |snmp-server enable traps config
+ 1261 |snmp-server enable traps config-ctid
+ 1262 |snmp-server enable traps fru-ctrl
+ 1263 |snmp-server enable traps entity
+ 1264 |snmp-server enable traps flash insertion removal lowspace
+ 1265 |snmp-server enable traps power-ethernet police
+ 1266 |snmp-server enable traps cpu threshold
+ 1267 |snmp-server enable traps syslog
+ 1268 |snmp-server enable traps udld link-fail-rpt
+ 1269 |snmp-server enable traps udld status-change
+ 1270 |snmp-server enable traps vtp
+ 1271 |snmp-server enable traps vlancreate
+ 1272 |snmp-server enable traps vlandelete
+ 1273 |snmp-server enable traps port-security
+ 1274 |snmp-server enable traps envmon
+ 1275 |snmp-server enable traps stackwise
+ 1276 |snmp-server enable traps mvpn
+ 1277 |snmp-server enable traps pw vc
+ 1278 |snmp-server enable traps ipsla
+ 1279 |snmp-server enable traps dhcp
+ 1280 |snmp-server enable traps event-manager
+ 1281 |snmp-server enable traps ike policy add
+ 1282 |snmp-server enable traps ike policy delete
+ 1283 |snmp-server enable traps ike tunnel start
+ 1284 |snmp-server enable traps ike tunnel stop
+ 1285 |snmp-server enable traps ipsec cryptomap add
+ 1286 |snmp-server enable traps ipsec cryptomap delete
+ 1287 |snmp-server enable traps ipsec cryptomap attach
+ 1288 |snmp-server enable traps ipsec cryptomap detach
+ 1289 |snmp-server enable traps ipsec tunnel start
+ 1290 |snmp-server enable traps ipsec tunnel stop
+ 1291 |snmp-server enable traps ipsec too-many-sas
+ 1292 |snmp-server enable traps ospfv3 state-change
+ 1293 |snmp-server enable traps ospfv3 errors
+ 1294 |snmp-server enable traps ipmulticast
+ 1295 |snmp-server enable traps pimstdmib neighbor-loss invalid-register invalid-join-prune rp-mapping-change interface-election
+ 1296 |snmp-server enable traps msdp
+ 1297 |snmp-server enable traps pim neighbor-change rp-mapping-change invalid-pim-message
+ 1298 |snmp-server enable traps bridge newroot topologychange
+ 1299 |snmp-server enable traps stpx inconsistency root-inconsistency loop-inconsistency
+ 1300 |snmp-server enable traps bgp
+ 1301 |snmp-server enable traps bgp cbgp2
+ 1302 |snmp-server enable traps hsrp
+ 1303 |snmp-server enable traps isis
+ 1304 |snmp-server enable traps cef resource-failure peer-state-change peer-fib-state-change inconsistency
+ 1305 |snmp-server enable traps lisp
+ 1306 |snmp-server enable traps nhrp nhs
+ 1307 |snmp-server enable traps nhrp nhc
+ 1308 |snmp-server enable traps nhrp nhp
+ 1309 |snmp-server enable traps nhrp quota-exceeded
+ 1310 |snmp-server enable traps local-auth
+ 1311 |snmp-server enable traps entity-diag boot-up-fail hm-test-recover hm-thresh-reached scheduled-test-fail
+ 1312 |snmp-server enable traps mpls rfc ldp
+ 1313 |snmp-server enable traps mpls ldp
+ 1314 |snmp-server enable traps mpls rfc traffic-eng
+ 1315 |snmp-server enable traps mpls traffic-eng
+ 1316 |snmp-server enable traps mpls fast-reroute protected
+ 1317 |snmp-server enable traps bulkstat collection transfer
+ 1318 |snmp-server enable traps mac-notification change move threshold
+ 1319 |snmp-server enable traps errdisable
+ 1320 |snmp-server enable traps vlan-membership
+ 1321 |snmp-server enable traps transceiver all
+ 1322 |snmp-server enable traps vrfmib vrf-up vrf-down vnet-trunk-up vnet-trunk-down
+ 1323 |snmp-server enable traps rf
+ 1324 |snmp-server enable traps mpls vpn
+ 1325 |snmp-server enable traps mpls rfc vpn
+ 1326 |snmp-server host 10.1.136.141 version 3 priv xxxxxxxx 
+ 1327 |!
+ 1328 |radius-server attribute 6 on-for-login-auth
+ 1329 |radius-server attribute 6 support-multiple
+ 1330 |radius-server attribute 8 include-in-access-req
+ 1331 |radius-server attribute 25 access-request include
+ 1332 |radius-server attribute 31 mac format ietf upper-case
+ 1333 |radius-server attribute 31 send nas-port-detail mac-only
+ 1334 |radius-server dead-criteria time 5 tries 3
+ 1335 |radius-server deadtime 3
+ 1336 |!
+ 1337 |radius server dnac-radius_10.1.136.151
+ 1338 | address ipv4 10.1.136.151 auth-port 1812 acct-port 1813
+ 1339 | timeout 4
+ 1340 | retransmit 3
+ 1341 | automate-tester username dummy ignore-acct-port probe-on
+ 1342 |  pac key 7 xxxxxxxx
+ 1343 |!
+ 1344 |radius server dnac-radius_10.1.136.152
+ 1345 | address ipv4 10.1.136.152 auth-port 1812 acct-port 1813
+ 1346 | timeout 4
+ 1347 | retransmit 3
+ 1348 | automate-tester username dummy ignore-acct-port probe-on
+ 1349 |  pac key 7 xxxxxxxx
+ 1350 |!
+ 1351 |!
+ 1352 |!
+ 1353 |control-plane
+ 1354 | service-policy input system-cpp-policy
+ 1355 |!
+ 1356 |!
+ 1357 |cts role-based enforcement
+ 1358 |!
+ 1359 |line con 0
+ 1360 | stopbits 1
+ 1361 |line aux 0
+ 1362 |line vty 0 4
+ 1363 | authorization exec VTY_author
+ 1364 | login xxxxxx
+ 1365 | transport input ssh
+ 1366 |line vty 5 15
+ 1367 | authorization exec VTY_author
+ 1368 | login xxxxxx
+ 1369 | transport input ssh
+ 1370 |line vty 16 31
+ 1371 | transport input ssh
+ 1372 |!
+ 1373 |ntp server 10.173.230.73
+ 1374 |ntp server 10.190.40.74
+ 1375 |ntp server 10.167.18.19
+ 1376 |ntp server 10.190.32.132
+ 1377 |ntp server 10.190.44.92
+ 1378 |!
+ 1379 |!
+ 1380 |!
+ 1381 |!
+ 1382 |!
+ 1383 |!
+ 1384 |telemetry ietf subscription 550
+ 1385 | encoding encode-tdl
+ 1386 | filter tdl-uri /services;serviceName=smevent/sessionevent
+ 1387 | receiver-type protocol
+ 1388 | source-address 10.5.80.128
+ 1389 | stream native
+ 1390 | update-policy on-change
+ 1391 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1392 |telemetry ietf subscription 551
+ 1393 | encoding encode-tdl
+ 1394 | filter tdl-uri /services;serviceName=sessmgr_oper/session_context_data
+ 1395 | receiver-type protocol
+ 1396 | source-address 10.5.80.128
+ 1397 | stream native
+ 1398 | update-policy periodic 360000
+ 1399 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1400 |telemetry ietf subscription 552
+ 1401 | encoding encode-tdl
+ 1402 | filter tdl-uri /services;serviceName=iosevent/sisf_mac_oper_state
+ 1403 | receiver-type protocol
+ 1404 | source-address 10.5.80.128
+ 1405 | stream native
+ 1406 | update-policy on-change
+ 1407 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1408 |telemetry ietf subscription 553
+ 1409 | encoding encode-tdl
+ 1410 | filter tdl-uri /services;serviceName=ios_oper/sisf_db_wired_mac
+ 1411 | receiver-type protocol
+ 1412 | source-address 10.5.80.128
+ 1413 | stream native
+ 1414 | update-policy periodic 360000
+ 1415 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1416 |telemetry ietf subscription 554
+ 1417 | encoding encode-tdl
+ 1418 | filter tdl-uri /services;serviceName=ios_oper/cdp_neighbor_detail
+ 1419 | receiver-type protocol
+ 1420 | source-address 10.5.80.128
+ 1421 | stream native
+ 1422 | update-policy periodic 360000
+ 1423 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1424 |telemetry ietf subscription 555
+ 1425 | encoding encode-tdl
+ 1426 | filter tdl-uri /services;serviceName=ios_oper/cdp_neighbor_detail
+ 1427 | receiver-type protocol
+ 1428 | source-address 10.5.80.128
+ 1429 | stream native
+ 1430 | update-policy on-change
+ 1431 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1432 |telemetry ietf subscription 600
+ 1433 | encoding encode-tdl
+ 1434 | filter tdl-uri /services;serviceName=sessmgr_oper/tbl_aaa_servers_stat
+ 1435 | receiver-type protocol
+ 1436 | source-address 10.5.80.128
+ 1437 | stream native
+ 1438 | update-policy periodic 60000
+ 1439 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1440 |telemetry ietf subscription 601
+ 1441 | encoding encode-tdl
+ 1442 | filter tdl-uri /services;serviceName=sessmgr_oper/tbl_aaa_servers_stat
+ 1443 | receiver-type protocol
+ 1444 | source-address 10.5.80.128
+ 1445 | stream native
+ 1446 | update-policy on-change
+ 1447 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1448 |telemetry ietf subscription 602
+ 1449 | encoding encode-tdl
+ 1450 | filter tdl-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/sessions
+ 1451 | receiver-type protocol
+ 1452 | source-address 10.5.80.128
+ 1453 | stream native
+ 1454 | update-policy periodic 360000
+ 1455 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1456 |telemetry ietf subscription 603
+ 1457 | encoding encode-tdl
+ 1458 | filter tdl-uri /services;serviceName=iosevent/lisp_tcp_session_state
+ 1459 | receiver-type protocol
+ 1460 | source-address 10.5.80.128
+ 1461 | stream native
+ 1462 | update-policy on-change
+ 1463 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1464 |telemetry ietf subscription 604
+ 1465 | encoding encode-tdl
+ 1466 | filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/instances;iid=0/af;iaftype=LISP_TDL_IAF_IPV4/lisp_publisher
+ 1467 | receiver-type protocol
+ 1468 | source-address 10.5.80.128
+ 1469 | stream native
+ 1470 | update-policy periodic 360000
+ 1471 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1472 |telemetry ietf subscription 605
+ 1473 | encoding encode-tdl
+ 1474 | filter tdl-uri /services;serviceName=iosevent/lisp_pubsub_session_state
+ 1475 | receiver-type protocol
+ 1476 | source-address 10.5.80.128
+ 1477 | stream native
+ 1478 | update-policy on-change
+ 1479 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1480 |telemetry ietf subscription 606
+ 1481 | encoding encode-tdl
+ 1482 | filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/remote_locator_sets;name=default-etr-locator-set-ipv4/rem_loc_set_rlocs_si
+ 1483 | receiver-type protocol
+ 1484 | source-address 10.5.80.128
+ 1485 | stream native
+ 1486 | update-policy periodic 360000
+ 1487 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1488 |telemetry ietf subscription 607
+ 1489 | encoding encode-tdl
+ 1490 | filter tdl-uri /services;serviceName=iosevent/lisp_etr_si_type
+ 1491 | receiver-type protocol
+ 1492 | source-address 10.5.80.128
+ 1493 | stream native
+ 1494 | update-policy on-change
+ 1495 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1496 |telemetry ietf subscription 608
+ 1497 | encoding encode-tdl
+ 1498 | filter tdl-uri /services;serviceName=ios_emul_oper/cts_env_data
+ 1499 | receiver-type protocol
+ 1500 | source-address 10.5.80.128
+ 1501 | stream native
+ 1502 | update-policy periodic 60000
+ 1503 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1504 |telemetry ietf subscription 609
+ 1505 | encoding encode-tdl
+ 1506 | filter tdl-uri /services;serviceName=ios_emul_oper/bgp_state;singleton_id=0/neighbor
+ 1507 | receiver-type protocol
+ 1508 | source-address 10.5.80.128
+ 1509 | stream native
+ 1510 | update-policy periodic 360000
+ 1511 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1512 |telemetry ietf subscription 610
+ 1513 | encoding encode-tdl
+ 1514 | filter tdl-uri /services;serviceName=ios_emul_oper/bgp_state;singleton_id=0/neighbor
+ 1515 | receiver-type protocol
+ 1516 | source-address 10.5.80.128
+ 1517 | stream native
+ 1518 | update-policy on-change
+ 1519 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1520 |telemetry ietf subscription 611
+ 1521 | encoding encode-tdl
+ 1522 | filter tdl-uri /services;serviceName=iosevent/lisp_extranet_policy_state
+ 1523 | receiver-type protocol
+ 1524 | source-address 10.5.80.128
+ 1525 | stream native
+ 1526 | update-policy on-change
+ 1527 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1528 |telemetry ietf subscription 612
+ 1529 | encoding encode-tdl
+ 1530 | filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/instances;iid=1/extranets
+ 1531 | receiver-type protocol
+ 1532 | source-address 10.5.80.128
+ 1533 | stream native
+ 1534 | update-policy periodic 360000
+ 1535 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1536 |telemetry ietf subscription 613
+ 1537 | encoding encode-tdl
+ 1538 | filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/instances;iid=1/extranets;extranet_name=ext1/extranet_member_instances
+ 1539 | receiver-type protocol
+ 1540 | source-address 10.5.80.128
+ 1541 | stream native
+ 1542 | update-policy periodic 360000
+ 1543 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1544 |telemetry ietf subscription 614
+ 1545 | encoding encode-tdl
+ 1546 | filter nested-uri /services;serviceName=ios_oper/nve_oper;unit_number=0/nve_vni_oper
+ 1547 | receiver-type protocol
+ 1548 | source-address 10.5.80.128
+ 1549 | stream native
+ 1550 | update-policy periodic 960000
+ 1551 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1552 |telemetry ietf subscription 615
+ 1553 | encoding encode-tdl
+ 1554 | filter nested-uri /services;serviceName=ios_oper/nve_oper;unit_number=0/nve_peer_oper
+ 1555 | receiver-type protocol
+ 1556 | source-address 10.5.80.128
+ 1557 | stream native
+ 1558 | update-policy periodic 960000
+ 1559 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1560 |telemetry ietf subscription 616
+ 1561 | encoding encode-tdl
+ 1562 | filter nested-uri /services;serviceName=ios_oper/nve_oper
+ 1563 | receiver-type protocol
+ 1564 | source-address 10.5.80.128
+ 1565 | stream native
+ 1566 | update-policy on-change
+ 1567 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1568 |telemetry ietf subscription 750
+ 1569 | encoding encode-tdl
+ 1570 | filter tdl-uri /services;serviceName=ios_emul_oper/environment_sensor
+ 1571 | receiver-type protocol
+ 1572 | source-address 10.5.80.128
+ 1573 | stream native
+ 1574 | update-policy periodic 30000
+ 1575 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1576 |telemetry ietf subscription 751
+ 1577 | encoding encode-tdl
+ 1578 | filter tdl-uri /services;serviceName=ios_oper/platform_component
+ 1579 | receiver-type protocol
+ 1580 | source-address 10.5.80.128
+ 1581 | stream native
+ 1582 | update-policy periodic 30000
+ 1583 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1584 |telemetry ietf subscription 1020
+ 1585 | encoding encode-tdl
+ 1586 | filter tdl-uri /services;serviceName=iosevent/install_status
+ 1587 | receiver-type protocol
+ 1588 | source-address 10.5.80.128
+ 1589 | stream native
+ 1590 | update-policy on-change
+ 1591 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1592 |telemetry ietf subscription 8882
+ 1593 | encoding encode-tdl
+ 1594 | filter tdl-transform trustSecCounterDelta
+ 1595 | receiver-type protocol
+ 1596 | source-address 10.5.80.128
+ 1597 | stream native
+ 1598 | update-policy periodic 90000
+ 1599 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1600 |telemetry receiver protocol DNAC_ASSURANCE_RECEIVER
+ 1601 | host ip-address 10.1.136.141 25103
+ 1602 | protocol tls-native profile sdn-network-infra-iwan
+ 1603 |telemetry transform trustSecCounterDelta
+ 1604 | input table cts_rolebased_policy
+ 1605 |  field dst_sgt
+ 1606 |  field src_sgt
+ 1607 |  field sgacl_name
+ 1608 |  field monitor_mode
+ 1609 |  field num_of_sgacl
+ 1610 |  field policy_life_time
+ 1611 |  field total_deny_count
+ 1612 |  field last_updated_time
+ 1613 |  field total_permit_count
+ 1614 |  join-key cts_role_based_policy_key
+ 1615 |  logical-op and
+ 1616 |  type mandatory
+ 1617 |  uri /services;serviceName=ios_emul_oper/cts_rolebased_policy
+ 1618 | operation 1
+ 1619 |  output-field 1
+ 1620 |   field cts_rolebased_policy.src_sgt
+ 1621 |  output-field 2
+ 1622 |   field cts_rolebased_policy.dst_sgt
+ 1623 |  output-field 3
+ 1624 |   field cts_rolebased_policy.total_permit_count
+ 1625 |   output-op type delta
+ 1626 |  output-field 4
+ 1627 |   field cts_rolebased_policy.total_deny_count
+ 1628 |   output-op type delta
+ 1629 |  output-field 5
+ 1630 |   field cts_rolebased_policy.sgacl_name
+ 1631 |  output-field 6
+ 1632 |   field cts_rolebased_policy.monitor_mode
+ 1633 |  output-field 7
+ 1634 |   field cts_rolebased_policy.num_of_sgacl
+ 1635 |  output-field 8
+ 1636 |   field cts_rolebased_policy.policy_life_time
+ 1637 |  output-field 9
+ 1638 |   field cts_rolebased_policy.last_updated_time
+ 1639 | specified
+ 1640 |netconf-yang
+ 1641 |end
+ 1642 |
+ 1643 |

@@ -1,0 +1,119 @@
+!
+! Cisco Fusion Router Configuration
+! Generated: {{ timestamp }}
+! Hostname: {{ hostname }}
+!
+version 17.12
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+!
+hostname {{ hostname }}
+!
+{% if vrfs %}
+{%- for vrf in vrfs %}
+vrf definition {{ vrf }}
+ rd 1:4099
+ !
+ address-family ipv4
+  route-target export 1:4099
+  route-target import 1:4099
+ exit-address-family
+!
+{%- endfor %}
+{% endif %}
+!
+! Loopback interface for BGP router ID
+interface Loopback0
+ description BGP Router ID
+ ip address {{ router_id }} 255.255.255.255
+!
+{% for interface in interfaces %}
+{%- if interface.vlan %}
+interface Vlan{{ interface.vlan }}
+ description {{ interface.description }}
+{%- if interface.vrf %}
+ vrf forwarding {{ interface.vrf }}
+{%- endif %}
+ ip address {{ interface.ip_address }} {{ interface.subnet_mask }}
+ no ip redirects
+ no ip proxy-arp
+ ip route-cache same-interface
+{%- if interface.bfd_enabled %}
+ bfd interval {{ interface.bfd_interval }} min_rx {{ interface.bfd_min_rx }} multiplier {{ interface.bfd_multiplier }}
+{%- endif %}
+ no shutdown
+!
+{%- endif %}
+{% endfor %}
+!
+! BGP Configuration
+router bgp {{ as_number }}
+ bgp router-id {{ router_id }}
+ bgp log-neighbor-changes
+ bgp graceful-restart
+ no bgp default ipv4-unicast
+{%- if bgp_neighbors_default %}
+{%- for neighbor in bgp_neighbors_default %}
+ neighbor {{ neighbor.ip }} remote-as {{ neighbor.remote_as }}
+ neighbor {{ neighbor.ip }} description Border Node - {{ neighbor.source_interface }}
+ neighbor {{ neighbor.ip }} update-source {{ neighbor.source_interface }}
+ neighbor {{ neighbor.ip }} fall-over bfd
+{%- endfor %}
+{%- endif %}
+ !
+ address-family ipv4
+{%- if bgp_neighbors_default %}
+{%- for neighbor in bgp_neighbors_default %}
+  neighbor {{ neighbor.ip }} activate
+  neighbor {{ neighbor.ip }} send-community both
+{%- endfor %}
+{%- endif %}
+ exit-address-family
+{%- for vrf in vrfs %}
+ !
+ address-family ipv4 vrf {{ vrf }}
+{%- for neighbor in bgp_neighbors_vrf[vrf] %}
+  neighbor {{ neighbor.ip }} remote-as {{ neighbor.remote_as }}
+  neighbor {{ neighbor.ip }} description Border Node - {{ neighbor.source_interface }}
+  neighbor {{ neighbor.ip }} update-source {{ neighbor.source_interface }}
+  neighbor {{ neighbor.ip }} fall-over bfd
+  neighbor {{ neighbor.ip }} activate
+  neighbor {{ neighbor.ip }} send-community both
+{%- endfor %}
+ exit-address-family
+{%- endfor %}
+!
+! BFD Configuration
+bfd-template single-hop FABRIC_BFD
+ interval min-tx 100 min-rx 100 multiplier 3
+!
+! Management and Security
+ip domain-lookup
+ip domain-name example.com
+ip ssh version 2
+ip scp server enable
+!
+! Logging
+logging buffered 51200
+logging console informational
+!
+! NTP Configuration (update with your NTP servers)
+! ntp server <ntp-server-ip>
+!
+! SNMP Configuration (update with your SNMP servers)
+! snmp-server community <community-string> RO
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+line vty 0 4
+ exec-timeout 30 0
+ logging synchronous
+ transport input ssh
+line vty 5 15
+ exec-timeout 30 0
+ logging synchronous
+ transport input ssh
+!
+end
