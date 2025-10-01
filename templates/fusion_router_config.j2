@@ -95,6 +95,95 @@ interface {{ interface.parent_interface }}.{{ interface.subif_id }}
 !
 {%- endif %}
 {% endfor %}
+{# OSPF Underlay Interface Configuration #}
+{% if ospf_config and ospf_config.enabled %}
+!
+! OSPF Underlay Interface Configuration
+{%- if ospf_config.interface_mode == 'physical' %}
+interface {{ ospf_config.interface_name }}
+ description OSPF underlay to peer fusion router
+ ip address {{ ospf_config.ip_address }} {{ ospf_config.subnet_mask }}
+{%- if ospf_config.cost %}
+ ip ospf cost {{ ospf_config.cost }}
+{%- endif %}
+{%- if ospf_config.authentication == 'md5' %}
+ ip ospf authentication message-digest
+ ip ospf message-digest-key {{ ospf_config.md5_key_id }} md5 {{ ospf_config.md5_key }}
+{%- endif %}
+ ip ospf {{ ospf_config.process_id }} area {{ ospf_config.area }}
+{%- if ospf_config.bfd_enabled %}
+ bfd interval {{ ospf_config.bfd_interval }} min_rx {{ ospf_config.bfd_min_rx }} multiplier {{ ospf_config.bfd_multiplier }}
+ ip ospf bfd
+{%- endif %}
+ no shutdown
+!
+{%- elif ospf_config.interface_mode == 'svi' %}
+vlan {{ ospf_config.vlan_id }}
+ name OSPF_UNDERLAY
+!
+interface {{ ospf_config.interface_name }}
+ description OSPF underlay physical trunk
+ switchport mode trunk
+ switchport trunk allowed vlan {{ ospf_config.vlan_id }}
+ no shutdown
+!
+interface Vlan{{ ospf_config.vlan_id }}
+ description OSPF underlay to peer fusion router
+ ip address {{ ospf_config.ip_address }} {{ ospf_config.subnet_mask }}
+{%- if ospf_config.cost %}
+ ip ospf cost {{ ospf_config.cost }}
+{%- endif %}
+{%- if ospf_config.authentication == 'md5' %}
+ ip ospf authentication message-digest
+ ip ospf message-digest-key {{ ospf_config.md5_key_id }} md5 {{ ospf_config.md5_key }}
+{%- endif %}
+ ip ospf {{ ospf_config.process_id }} area {{ ospf_config.area }}
+{%- if ospf_config.bfd_enabled %}
+ bfd interval {{ ospf_config.bfd_interval }} min_rx {{ ospf_config.bfd_min_rx }} multiplier {{ ospf_config.bfd_multiplier }}
+ ip ospf bfd
+{%- endif %}
+ no shutdown
+!
+{%- elif ospf_config.interface_mode == 'subinterface' %}
+interface {{ ospf_config.interface_name }}.{{ ospf_config.vlan_id }}
+ description OSPF underlay to peer fusion router
+ encapsulation {{ ospf_config.encapsulation }}
+ ip address {{ ospf_config.ip_address }} {{ ospf_config.subnet_mask }}
+{%- if ospf_config.cost %}
+ ip ospf cost {{ ospf_config.cost }}
+{%- endif %}
+{%- if ospf_config.authentication == 'md5' %}
+ ip ospf authentication message-digest
+ ip ospf message-digest-key {{ ospf_config.md5_key_id }} md5 {{ ospf_config.md5_key }}
+{%- endif %}
+ ip ospf {{ ospf_config.process_id }} area {{ ospf_config.area }}
+{%- if ospf_config.bfd_enabled %}
+ bfd interval {{ ospf_config.bfd_interval }} min_rx {{ ospf_config.bfd_min_rx }} multiplier {{ ospf_config.bfd_multiplier }}
+ ip ospf bfd
+{%- endif %}
+!
+{%- endif %}
+{% endif %}
+!
+! OSPF Routing Process Configuration
+{% if ospf_config and ospf_config.enabled %}
+router ospf {{ ospf_config.process_id }}
+ router-id {{ router_id }}
+{%- if ospf_config.bfd_enabled %}
+ bfd all-interfaces
+{%- endif %}
+ network {{ ospf_config.network_address }} {{ ospf_config.wildcard_mask }} area {{ ospf_config.area }}
+ network {{ router_id }} 0.0.0.0 area {{ ospf_config.area }}
+ passive-interface default
+{%- if ospf_config.interface_mode == 'physical' %}
+ no passive-interface {{ ospf_config.interface_name }}
+{%- elif ospf_config.interface_mode == 'svi' %}
+ no passive-interface Vlan{{ ospf_config.vlan_id }}
+{%- elif ospf_config.interface_mode == 'subinterface' %}
+ no passive-interface {{ ospf_config.interface_name }}.{{ ospf_config.vlan_id }}
+{%- endif %}
+!
+{% endif %}
 !
 ! BGP Configuration
 router bgp {{ as_number }}

@@ -446,6 +446,111 @@ def validate_ip_address(ip_str):
         return False, f"Invalid IP address: {ip_str}"
 
 
+def validate_ospf_params(ospf_params):
+    """
+    Validate OSPF configuration parameters.
+
+    Args:
+        ospf_params: Dict with OSPF parameters
+            {
+                'enabled': True,
+                'process_id': 1,
+                'area': 0,
+                'interface_mode': 'physical|svi|subinterface',
+                'router1_interface': 'GigabitEthernet0/0/10',
+                'router1_ip': '10.255.255.0',
+                'router2_interface': 'GigabitEthernet0/0/10',
+                'router2_ip': '10.255.255.1',
+                'subnet_mask': '255.255.255.252',
+                'vlan_id': 999,  # for SVI/subinterface modes
+                'cost': 100,  # optional
+                'bfd_enabled': True,
+                'authentication': 'none|md5',
+                'md5_key_id': 1,
+                'md5_key': 'secret'
+            }
+
+    Returns:
+        tuple: (is_valid, error_message)
+
+    Raises:
+        ValueError: If validation fails
+    """
+    if not ospf_params or not ospf_params.get('enabled'):
+        return True, None
+
+    # Validate process ID (1-65535)
+    process_id = ospf_params.get('process_id')
+    if not process_id or not isinstance(process_id, int) or process_id < 1 or process_id > 65535:
+        raise ValueError("OSPF process ID must be between 1 and 65535")
+
+    # Validate area (0-4294967295)
+    area = ospf_params.get('area')
+    if area is None or not isinstance(area, int) or area < 0 or area > 4294967295:
+        raise ValueError("OSPF area must be between 0 and 4294967295")
+
+    # Validate IP addresses
+    router1_ip = ospf_params.get('router1_ip')
+    router2_ip = ospf_params.get('router2_ip')
+    if not router1_ip or not router2_ip:
+        raise ValueError("Both router IP addresses are required for OSPF")
+
+    is_valid, error = validate_ip_address(router1_ip)
+    if not is_valid:
+        raise ValueError(f"Router 1 IP: {error}")
+
+    is_valid, error = validate_ip_address(router2_ip)
+    if not is_valid:
+        raise ValueError(f"Router 2 IP: {error}")
+
+    # Validate subnet mask
+    subnet_mask = ospf_params.get('subnet_mask')
+    if not subnet_mask:
+        raise ValueError("Subnet mask is required for OSPF")
+
+    try:
+        # Validate it's a valid netmask
+        ipaddress.IPv4Network(f"0.0.0.0/{subnet_mask}", strict=False)
+    except ValueError:
+        raise ValueError(f"Invalid subnet mask: {subnet_mask}")
+
+    # Validate interface names with regex
+    interface_pattern = re.compile(
+        r'^(GigabitEthernet|TenGigabitEthernet|FortyGigE|HundredGigE|TwentyFiveGigE|Port-channel)[\d/]+$'
+    )
+
+    router1_interface = ospf_params.get('router1_interface')
+    router2_interface = ospf_params.get('router2_interface')
+
+    if not router1_interface or not router2_interface:
+        raise ValueError("Both router interface names are required for OSPF")
+
+    if not interface_pattern.match(router1_interface):
+        raise ValueError(f"Invalid interface name format: {router1_interface}")
+
+    if not interface_pattern.match(router2_interface):
+        raise ValueError(f"Invalid interface name format: {router2_interface}")
+
+    # Validate VLAN ID for SVI/subinterface modes (1-4094)
+    interface_mode = ospf_params.get('interface_mode')
+    if interface_mode in ['svi', 'subinterface']:
+        vlan_id = ospf_params.get('vlan_id')
+        if not vlan_id or not isinstance(vlan_id, int) or vlan_id < 1 or vlan_id > 4094:
+            raise ValueError(f"VLAN ID must be between 1 and 4094 for {interface_mode} mode")
+
+    # Validate MD5 key when authentication is enabled
+    if ospf_params.get('authentication') == 'md5':
+        md5_key = ospf_params.get('md5_key')
+        if not md5_key or not isinstance(md5_key, str) or len(md5_key) < 1:
+            raise ValueError("MD5 key is required when MD5 authentication is enabled")
+
+        md5_key_id = ospf_params.get('md5_key_id')
+        if not md5_key_id or not isinstance(md5_key_id, int) or md5_key_id < 1 or md5_key_id > 255:
+            raise ValueError("MD5 key ID must be between 1 and 255")
+
+    return True, None
+
+
 def build_vrf_config(vrf_params):
     """
     Build VRF configuration dictionary.
@@ -554,7 +659,97 @@ def build_ibgp_configs(fusion_routers, ibgp_params):
     return ibgp_configs
 
 
-def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, vrf_configs, ibgp_config=None):
+def build_ospf_configs(fusion_routers, ospf_params):
+    """
+    Build OSPF underlay configuration for both fusion routers.
+
+    Args:
+        fusion_routers: List of fusion router configurations
+        ospf_params: Dict with OSPF parameters from user input
+            {
+                'enabled': True,
+                'process_id': 1,
+                'area': 0,
+                'interface_mode': 'physical|svi|subinterface',
+                'router1_interface': 'GigabitEthernet0/0/10',
+                'router1_ip': '10.255.255.0',
+                'router2_interface': 'GigabitEthernet0/0/10',
+                'router2_ip': '10.255.255.1',
+                'subnet_mask': '255.255.255.252',
+                'vlan_id': 999,  # for SVI/subinterface modes
+                'cost': 100,  # optional
+                'bfd_enabled': True,
+                'bfd_interval': 250,
+                'bfd_min_rx': 250,
+                'bfd_multiplier': 3,
+                'authentication': 'none|md5',
+                'md5_key_id': 1,
+                'md5_key': 'secret'
+            }
+
+    Returns:
+        List of OSPF configurations, one per router
+    """
+    if not ospf_params or not ospf_params.get('enabled') or len(fusion_routers) < 2:
+        return []
+
+    # Validate OSPF parameters
+    validate_ospf_params(ospf_params)
+
+    # Calculate network address and wildcard mask
+    router1_ip = ospf_params['router1_ip']
+    subnet_mask = ospf_params['subnet_mask']
+
+    # Create network from first IP and subnet mask
+    network = ipaddress.IPv4Network(f"{router1_ip}/{subnet_mask}", strict=False)
+    network_address = str(network.network_address)
+
+    # Calculate wildcard mask (inverse of subnet mask)
+    wildcard_mask = str(ipaddress.IPv4Address(int(ipaddress.IPv4Address('255.255.255.255')) - int(ipaddress.IPv4Address(subnet_mask))))
+
+    # Build OSPF configs for each router
+    ospf_configs = []
+
+    for i, router in enumerate(fusion_routers):
+        interface_mode = ospf_params['interface_mode']
+        interface_name = ospf_params['router1_interface'] if i == 0 else ospf_params['router2_interface']
+        ip_address = ospf_params['router1_ip'] if i == 0 else ospf_params['router2_ip']
+
+        config = {
+            'enabled': True,
+            'router_id': router['router_id'],
+            'process_id': ospf_params['process_id'],
+            'area': ospf_params['area'],
+            'network_address': network_address,
+            'wildcard_mask': wildcard_mask,
+            'interface_mode': interface_mode,
+            'interface_name': interface_name,
+            'ip_address': ip_address,
+            'subnet_mask': subnet_mask,
+            'cost': ospf_params.get('cost'),
+            'bfd_enabled': ospf_params.get('bfd_enabled', True),
+            'bfd_interval': ospf_params.get('bfd_interval', 250),
+            'bfd_min_rx': ospf_params.get('bfd_min_rx', 250),
+            'bfd_multiplier': ospf_params.get('bfd_multiplier', 3),
+            'authentication': ospf_params.get('authentication', 'none'),
+            'md5_key_id': ospf_params.get('md5_key_id'),
+            'md5_key': ospf_params.get('md5_key')
+        }
+
+        # Add VLAN ID for SVI/subinterface modes
+        if interface_mode in ['svi', 'subinterface']:
+            config['vlan_id'] = ospf_params['vlan_id']
+
+        # Add encapsulation for subinterface mode
+        if interface_mode == 'subinterface':
+            config['encapsulation'] = f"dot1Q {ospf_params['vlan_id']}"
+
+        ospf_configs.append(config)
+
+    return ospf_configs
+
+
+def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, vrf_configs, ibgp_config=None, ospf_config=None):
     """
     Generate complete Cisco IOS configuration for fusion router(s).
 
@@ -763,6 +958,7 @@ def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, 
         bgp_neighbors_vrf=bgp_neighbors_vrf,
         vrf_definitions=vrf_definitions,
         ibgp_config=ibgp_config,
+        ospf_config=ospf_config,
         timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     )
 
@@ -839,6 +1035,18 @@ def generate_config():
             except ValueError as e:
                 return jsonify({'error': str(e)}), 400
 
+        # Build OSPF configurations if enabled
+        ospf_configs = []
+        if data.get('ospf_params') and data['ospf_params'].get('enabled'):
+            try:
+                validate_ospf_params(data['ospf_params'])
+                ospf_configs = build_ospf_configs(
+                    fusion_routers=data['fusion_routers'],
+                    ospf_params=data['ospf_params']
+                )
+            except ValueError as e:
+                return jsonify({'error': str(e)}), 400
+
         # Generate configurations for each fusion router
         configs = {}
         fusion_routers = data['fusion_routers']
@@ -852,12 +1060,20 @@ def generate_config():
                         router_ibgp_config = ic
                         break
 
+                # Find OSPF config for this router
+                router_ospf_config = None
+                for oc in ospf_configs:
+                    if oc['router_id'] == router_params['router_id']:
+                        router_ospf_config = oc
+                        break
+
                 config = generate_fusion_router_config(
                     fusion_router_params=router_params,
                     border_nodes=data['border_nodes'],
                     handoffs=data['handoffs'],
                     vrf_configs=data['vrf_configs'],
-                    ibgp_config=router_ibgp_config
+                    ibgp_config=router_ibgp_config,
+                    ospf_config=router_ospf_config
                 )
                 configs[router_params['hostname']] = config
             except Exception as e:

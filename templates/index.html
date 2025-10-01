@@ -398,6 +398,43 @@
             pointer-events: none;
         }
 
+        /* Interface Labels */
+        .interface-label {
+            font-size: 9px;
+            font-weight: 600;
+            fill: #495057;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+        .interface-label-bg {
+            fill: #fff3cd;
+            stroke: #ffc107;
+            stroke-width: 1;
+            rx: 3;
+        }
+        .border-interface-list {
+            font-size: 8px;
+            fill: #495057;
+            pointer-events: none;
+        }
+        .border-interface-label {
+            font-size: 9px;
+            font-weight: 600;
+            fill: #667eea;
+            pointer-events: none;
+        }
+        .fusion-interface-list {
+            font-size: 8px;
+            fill: #495057;
+            pointer-events: none;
+        }
+        .interface-port-label {
+            font-size: 8px;
+            font-weight: 500;
+            fill: #764ba2;
+            pointer-events: none;
+        }
+
         /* Drag Ghost Line */
         #dragGhostLine {
             stroke: #667eea;
@@ -616,6 +653,127 @@
                                             <strong>Enable BFD for iBGP sessions</strong>
                                         </label>
                                         <div class="form-text">Bidirectional Forwarding Detection for fast failure detection</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OSPF Underlay Configuration Section -->
+                    <div id="ospfUnderlaySection" style="display: none;">
+                        <div class="card mt-3">
+                            <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                                <h6 class="mb-0"><i class="fas fa-route"></i> OSPF Underlay Configuration</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Required for iBGP:</strong> OSPF provides Layer 3 reachability between fusion routers for iBGP Loopback peering.
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">OSPF Process ID</label>
+                                        <input type="number" class="form-control" id="ospfProcessId" value="1" min="1" max="65535">
+                                        <div class="form-text">OSPF process identifier (1-65535)</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">OSPF Area</label>
+                                        <input type="number" class="form-control" id="ospfArea" value="0" min="0">
+                                        <div class="form-text">Typically 0 for backbone area</div>
+                                    </div>
+                                </div>
+
+                                <h6 class="mt-4 mb-3">Interconnect Interface Configuration</h6>
+
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Interconnect Mode</strong></label>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ospfInterfaceMode"
+                                                       id="ospfModePhysical" value="physical" checked
+                                                       onchange="updateOspfInterfaceInputs()">
+                                                <label class="form-check-label" for="ospfModePhysical">
+                                                    <strong>Physical Interface</strong><br>
+                                                    <small class="text-muted">Direct L3 point-to-point</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ospfInterfaceMode"
+                                                       id="ospfModeSVI" value="svi"
+                                                       onchange="updateOspfInterfaceInputs()">
+                                                <label class="form-check-label" for="ospfModeSVI">
+                                                    <strong>SVI (VLAN Interface)</strong><br>
+                                                    <small class="text-muted">L3 on VLAN, L2 trunk</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ospfInterfaceMode"
+                                                       id="ospfModeSubif" value="subinterface"
+                                                       onchange="updateOspfInterfaceInputs()">
+                                                <label class="form-check-label" for="ospfModeSubif">
+                                                    <strong>Subinterface</strong><br>
+                                                    <small class="text-muted">802.1Q subinterfaces</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="ospfInterfaceInputs">
+                                    <!-- Dynamically populated based on mode selection -->
+                                </div>
+
+                                <!-- BFD Configuration -->
+                                <h6 class="mt-4 mb-3">BFD Configuration</h6>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="ospfBfdEnabled" checked>
+                                    <label class="form-check-label" for="ospfBfdEnabled">
+                                        <strong>Enable BFD for OSPF</strong>
+                                    </label>
+                                    <div class="form-text">Bidirectional Forwarding Detection for fast convergence</div>
+                                </div>
+
+                                <div class="row" id="ospfBfdParams">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Interval (ms)</label>
+                                        <input type="number" class="form-control" id="ospfBfdInterval" value="250">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Min RX (ms)</label>
+                                        <input type="number" class="form-control" id="ospfBfdMinRx" value="250">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Multiplier</label>
+                                        <input type="number" class="form-control" id="ospfBfdMultiplier" value="3">
+                                    </div>
+                                </div>
+
+                                <!-- Authentication (Optional) -->
+                                <h6 class="mt-4 mb-3">Authentication (Optional)</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">OSPF Authentication</label>
+                                    <select class="form-select" id="ospfAuth" onchange="toggleOspfAuth()">
+                                        <option value="none" selected>None</option>
+                                        <option value="md5">MD5</option>
+                                    </select>
+                                </div>
+
+                                <div id="ospfAuthParams" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Key ID</label>
+                                            <input type="number" class="form-control" id="ospfKeyId" value="1" min="1" max="255">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Key String</label>
+                                            <input type="password" class="form-control" id="ospfKeyString" placeholder="Enter MD5 key">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -966,14 +1124,23 @@
 
             container.innerHTML = html;
 
-            // Show/hide iBGP section based on number of routers
+            // Show/hide iBGP and OSPF sections based on number of routers
             const ibgpSection = document.getElementById('ibgpConfigSection');
+            const ospfSection = document.getElementById('ospfUnderlaySection');
+
             if (numRouters === 2) {
                 ibgpSection.style.display = 'block';
+                ospfSection.style.display = 'none'; // Will be shown when iBGP is enabled
             } else {
                 ibgpSection.style.display = 'none';
+                ospfSection.style.display = 'none';
                 document.getElementById('enableIbgp').checked = false;
                 document.getElementById('ibgpConfigFields').style.display = 'none';
+            }
+
+            // Initialize OSPF interface inputs on load
+            if (numRouters === 2) {
+                updateOspfInterfaceInputs();
             }
         }
 
@@ -989,7 +1156,11 @@
 
             document.getElementById('ibgpConfigFields').style.display = enabled ? 'block' : 'none';
 
+            // Show/hide OSPF section when iBGP is enabled/disabled
+            const ospfSection = document.getElementById('ospfUnderlaySection');
             if (enabled) {
+                ospfSection.style.display = 'block';
+
                 // Auto-populate loopback IPs from BGP Router IDs
                 const routerId1 = document.getElementById('fusionRouterId1').value;
                 const routerId2 = document.getElementById('fusionRouterId2').value;
@@ -1000,7 +1171,166 @@
                 if (routerId2) {
                     document.getElementById('ibgpRouter2Loopback').value = routerId2;
                 }
+
+                // Initialize OSPF interface inputs
+                updateOspfInterfaceInputs();
+            } else {
+                ospfSection.style.display = 'none';
             }
+        }
+
+        function updateOspfInterfaceInputs() {
+            const mode = document.querySelector('input[name="ospfInterfaceMode"]:checked').value;
+            const container = document.getElementById('ospfInterfaceInputs');
+            let html = '';
+
+            if (mode === 'physical') {
+                html = `
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Router 1 Interface *</label>
+                            <input type="text" class="form-control" id="ospfRouter1Interface"
+                                   placeholder="GigabitEthernet0/0/10" required>
+                            <div class="form-text">Physical interface on router 1</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Router 1 IP Address *</label>
+                            <input type="text" class="form-control" id="ospfRouter1Ip"
+                                   placeholder="10.255.255.0" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Router 2 Interface *</label>
+                            <input type="text" class="form-control" id="ospfRouter2Interface"
+                                   placeholder="GigabitEthernet0/0/10" required>
+                            <div class="form-text">Physical interface on router 2</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Router 2 IP Address *</label>
+                            <input type="text" class="form-control" id="ospfRouter2Ip"
+                                   placeholder="10.255.255.1" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subnet Mask *</label>
+                            <select class="form-select" id="ospfSubnetMask">
+                                <option value="255.255.255.252" selected>/30 (255.255.255.252)</option>
+                                <option value="255.255.255.254">/31 (255.255.255.254)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">OSPF Cost (Optional)</label>
+                            <input type="number" class="form-control" id="ospfCost"
+                                   placeholder="100">
+                            <div class="form-text">Leave empty for auto-calculation</div>
+                        </div>
+                    </div>
+                `;
+            } else if (mode === 'svi') {
+                html = `
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">VLAN ID *</label>
+                            <input type="number" class="form-control" id="ospfVlanId"
+                                   placeholder="999" min="1" max="4094" required>
+                            <div class="form-text">VLAN for OSPF interconnect</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Router 1 IP Address *</label>
+                            <input type="text" class="form-control" id="ospfRouter1Ip"
+                                   placeholder="10.255.255.0" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Router 2 IP Address *</label>
+                            <input type="text" class="form-control" id="ospfRouter2Ip"
+                                   placeholder="10.255.255.1" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Router 1 Physical Trunk Interface *</label>
+                            <input type="text" class="form-control" id="ospfRouter1Interface"
+                                   placeholder="GigabitEthernet0/0/10" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Router 2 Physical Trunk Interface *</label>
+                            <input type="text" class="form-control" id="ospfRouter2Interface"
+                                   placeholder="GigabitEthernet0/0/10" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subnet Mask *</label>
+                            <select class="form-select" id="ospfSubnetMask">
+                                <option value="255.255.255.252" selected>/30 (255.255.255.252)</option>
+                                <option value="255.255.255.254">/31 (255.255.255.254)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">OSPF Cost (Optional)</label>
+                            <input type="number" class="form-control" id="ospfCost"
+                                   placeholder="100">
+                        </div>
+                    </div>
+                `;
+            } else if (mode === 'subinterface') {
+                html = `
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Subinterface ID *</label>
+                            <input type="number" class="form-control" id="ospfVlanId"
+                                   placeholder="999" min="1" max="4094" required>
+                            <div class="form-text">802.1Q VLAN tag</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Router 1 IP Address *</label>
+                            <input type="text" class="form-control" id="ospfRouter1Ip"
+                                   placeholder="10.255.255.0" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Router 2 IP Address *</label>
+                            <input type="text" class="form-control" id="ospfRouter2Ip"
+                                   placeholder="10.255.255.1" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Router 1 Parent Interface *</label>
+                            <input type="text" class="form-control" id="ospfRouter1Interface"
+                                   placeholder="GigabitEthernet0/0/10" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Router 2 Parent Interface *</label>
+                            <input type="text" class="form-control" id="ospfRouter2Interface"
+                                   placeholder="GigabitEthernet0/0/10" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subnet Mask *</label>
+                            <select class="form-select" id="ospfSubnetMask">
+                                <option value="255.255.255.252" selected>/30 (255.255.255.252)</option>
+                                <option value="255.255.255.254">/31 (255.255.255.254)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">OSPF Cost (Optional)</label>
+                            <input type="number" class="form-control" id="ospfCost"
+                                   placeholder="100">
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function toggleOspfAuth() {
+            const authType = document.getElementById('ospfAuth').value;
+            const authParams = document.getElementById('ospfAuthParams');
+            authParams.style.display = authType === 'md5' ? 'block' : 'none';
         }
 
         function proceedToStep3() {
@@ -1177,9 +1507,10 @@
             const container = document.getElementById('topologyContainer');
             container.innerHTML = '';
 
-            const width = 1200;
-            const height = 800;
-            const margin = { left: 150, right: 150, top: 100, bottom: 100 };
+            // Enhanced dimensions for more detail
+            const width = 1800;
+            const height = 1000;
+            const margin = { left: 250, right: 250, top: 100, bottom: 100 };
 
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('id', 'topologySvg');
@@ -1195,8 +1526,8 @@
             // Calculate positions
             const fusionX = margin.left;
             const borderX = width - margin.right;
-            const deviceWidth = 160;
-            const deviceHeight = 70;
+            const deviceWidth = 180;
+            const deviceHeight = 80;
 
             const fusionCount = fusionRouters.length;
             const borderCount = borderNodeConfigs.length;
@@ -1228,11 +1559,16 @@
                 svg.appendChild(group);
             });
 
-            // Draw border nodes
+            // Draw border nodes with VLAN interface details
             borderNodeConfigs.forEach((node, idx) => {
                 const y = margin.top + borderSpacing * (idx + 1) - deviceHeight / 2;
-                const group = drawDevice(mainGroup, borderX - deviceWidth, y, deviceWidth, deviceHeight, node.hostname, 'Border Node', null);
+                const group = drawDevice(mainGroup, borderX - deviceWidth, y, deviceWidth, deviceHeight, node.hostname, 'Border Node', null, node);
                 svg.appendChild(group);
+
+                // Draw VLAN interface list to the right of border node
+                if (node.vlan_interfaces && node.vlan_interfaces.length > 0) {
+                    drawBorderVlanList(mainGroup, borderX + 10, y, node.vlan_interfaces, deviceHeight);
+                }
             });
 
             // Add ghost line for drag preview
@@ -1249,7 +1585,81 @@
             updateZoomTransform();
         }
 
-        function drawDevice(parentGroup, x, y, width, height, label, type, fusionRouterId) {
+        /**
+         * Draw VLAN interface list next to border node
+         * Shows compact list of VLANs with their IPs
+         */
+        function drawBorderVlanList(parentGroup, x, y, vlanInterfaces, deviceHeight) {
+            const listGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            listGroup.setAttribute('class', 'vlan-list-group');
+
+            // Calculate dimensions
+            const lineHeight = 12;
+            const maxVisible = 5; // Show max 5 VLANs, then indicate "..."
+            const vlansToShow = vlanInterfaces.slice(0, maxVisible);
+            const hasMore = vlanInterfaces.length > maxVisible;
+            const totalHeight = (vlansToShow.length + (hasMore ? 1 : 0)) * lineHeight + 8;
+            const listWidth = 120;
+
+            // Background
+            const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bg.setAttribute('x', x);
+            bg.setAttribute('y', y);
+            bg.setAttribute('width', listWidth);
+            bg.setAttribute('height', totalHeight);
+            bg.setAttribute('fill', '#f8f9fa');
+            bg.setAttribute('stroke', '#dee2e6');
+            bg.setAttribute('stroke-width', '1');
+            bg.setAttribute('rx', '4');
+            bg.setAttribute('opacity', '0.95');
+            listGroup.appendChild(bg);
+
+            // Title
+            const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            title.setAttribute('x', x + listWidth / 2);
+            title.setAttribute('y', y + 10);
+            title.setAttribute('class', 'border-interface-label');
+            title.setAttribute('font-size', '8');
+            title.textContent = 'VLANs';
+            listGroup.appendChild(title);
+
+            // VLAN entries
+            vlansToShow.forEach((vlanIf, idx) => {
+                const entryY = y + 18 + (idx * lineHeight);
+
+                const vlanText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                vlanText.setAttribute('x', x + 5);
+                vlanText.setAttribute('y', entryY);
+                vlanText.setAttribute('class', 'border-interface-list');
+                vlanText.setAttribute('font-weight', '600');
+                vlanText.textContent = `${vlanIf.vlan}:`;
+                listGroup.appendChild(vlanText);
+
+                const ipText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                ipText.setAttribute('x', x + 28);
+                ipText.setAttribute('y', entryY);
+                ipText.setAttribute('class', 'border-interface-list');
+                ipText.setAttribute('font-size', '7');
+                ipText.textContent = vlanIf.ip_address;
+                listGroup.appendChild(ipText);
+            });
+
+            // Show "..." if more VLANs exist
+            if (hasMore) {
+                const moreText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                moreText.setAttribute('x', x + listWidth / 2);
+                moreText.setAttribute('y', y + 18 + (vlansToShow.length * lineHeight));
+                moreText.setAttribute('class', 'border-interface-list');
+                moreText.setAttribute('text-anchor', 'middle');
+                moreText.setAttribute('font-style', 'italic');
+                moreText.textContent = `+${vlanInterfaces.length - maxVisible} more...`;
+                listGroup.appendChild(moreText);
+            }
+
+            parentGroup.appendChild(listGroup);
+        }
+
+        function drawDevice(parentGroup, x, y, width, height, label, type, fusionRouterId, borderNodeData) {
             const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             group.setAttribute('class', `device-node ${type === 'Fusion Router' ? 'fusion-router' : ''}`);
 
@@ -1267,20 +1677,108 @@
 
             const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             text.setAttribute('x', x + width / 2);
-            text.setAttribute('y', y + height / 2 - 5);
+            text.setAttribute('y', y + height / 2 - 10);
             text.setAttribute('class', 'device-label');
             text.textContent = label;
             group.appendChild(text);
 
             const typeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             typeText.setAttribute('x', x + width / 2);
-            typeText.setAttribute('y', y + height / 2 + 10);
+            typeText.setAttribute('y', y + height / 2 + 5);
             typeText.setAttribute('class', 'device-type');
             typeText.textContent = type;
             group.appendChild(typeText);
 
+            // Add interface information for border nodes
+            if (type === 'Border Node' && borderNodeData && borderNodeData.vlan_interfaces) {
+                const vlanCount = borderNodeData.vlan_interfaces.length;
+                const interfaceText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                interfaceText.setAttribute('x', x + width / 2);
+                interfaceText.setAttribute('y', y + height / 2 + 18);
+                interfaceText.setAttribute('class', 'border-interface-label');
+                interfaceText.textContent = `${vlanCount} VLAN${vlanCount !== 1 ? 's' : ''}`;
+                group.appendChild(interfaceText);
+            }
+
+            // Add configured interface count for fusion routers
+            if (type === 'Fusion Router' && fusionRouterId) {
+                const configuredCount = Object.values(connectionConfigs).filter(
+                    c => c.fusion_router_id === fusionRouterId
+                ).length;
+                if (configuredCount > 0) {
+                    const interfaceText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    interfaceText.setAttribute('x', x + width / 2);
+                    interfaceText.setAttribute('y', y + height / 2 + 18);
+                    interfaceText.setAttribute('class', 'border-interface-label');
+                    interfaceText.textContent = `${configuredCount} connection${configuredCount !== 1 ? 's' : ''}`;
+                    group.appendChild(interfaceText);
+                }
+            }
+
             parentGroup.appendChild(group);
             return group;
+        }
+
+        /**
+         * Format fusion router interface label based on interface mode
+         * Returns abbreviated interface name for display on diagram
+         */
+        function formatInterfaceLabel(config) {
+            if (config.interface_mode === 'routed' && config.interface_name) {
+                // Abbreviate interface names: GigabitEthernet -> Gi, TenGigabitEthernet -> Te, etc.
+                return config.interface_name
+                    .replace('GigabitEthernet', 'Gi')
+                    .replace('TenGigabitEthernet', 'Te')
+                    .replace('FortyGigabitEthernet', 'Fo')
+                    .replace('HundredGigE', 'Hu')
+                    .replace('FastEthernet', 'Fa');
+            } else if (config.interface_mode === 'svi') {
+                if (config.vlan_id && config.physical_interface) {
+                    return `Vl${config.vlan_id} (${config.physical_interface.replace('GigabitEthernet', 'Gi')})`;
+                } else if (config.vlan_id) {
+                    return `Vlan${config.vlan_id}`;
+                }
+            } else if (config.interface_mode === 'subinterface') {
+                if (config.interface_name && config.subif_id) {
+                    const abbrev = config.interface_name
+                        .replace('GigabitEthernet', 'Gi')
+                        .replace('TenGigabitEthernet', 'Te')
+                        .replace('FortyGigabitEthernet', 'Fo')
+                        .replace('FastEthernet', 'Fa');
+                    return `${abbrev}.${config.subif_id}`;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Calculate line offset for connections to avoid overlap
+         * When multiple VLANs from same border connect to same fusion router,
+         * we offset connection points vertically
+         */
+        function calculateConnectionOffset(config, allConfigs) {
+            // Find all connections with same fusion router and border node
+            const sameConnections = Object.values(allConfigs).filter(c =>
+                c.fusion_router_id === config.fusion_router_id &&
+                c.border_hostname === config.border_hostname
+            );
+
+            if (sameConnections.length <= 1) return 0;
+
+            // Sort by VLAN ID for consistent ordering
+            sameConnections.sort((a, b) => parseInt(a.border_vlan_id) - parseInt(b.border_vlan_id));
+
+            // Find index of current connection
+            const currentIndex = sameConnections.findIndex(c =>
+                c.border_vlan_id === config.border_vlan_id
+            );
+
+            // Calculate offset: spread connections vertically
+            const offsetSpacing = 15; // pixels between each line
+            const totalOffset = (sameConnections.length - 1) * offsetSpacing;
+            const startOffset = -totalOffset / 2;
+
+            return startOffset + (currentIndex * offsetSpacing);
         }
 
         function drawConnection(parentGroup, config, fusionSpacing, borderSpacing, margin, deviceWidth, deviceHeight, canvasWidth) {
@@ -1293,8 +1791,11 @@
 
             if (fusionIdx === -1 || borderIdx === -1) return;
 
-            const fusionY = margin.top + fusionSpacing * (fusionIdx + 1);
-            const borderY = margin.top + borderSpacing * (borderIdx + 1);
+            // Calculate vertical offset to prevent line overlap
+            const yOffset = calculateConnectionOffset(config, connectionConfigs);
+
+            const fusionY = margin.top + fusionSpacing * (fusionIdx + 1) + yOffset;
+            const borderY = margin.top + borderSpacing * (borderIdx + 1) + yOffset;
 
             const x1 = margin.left + deviceWidth;
             const y1 = fusionY;
@@ -1357,6 +1858,44 @@
             vrfText.textContent = config.vrf_name || 'N/A';
             vrfText.setAttribute('fill', '#764ba2');
             connGroup.appendChild(vrfText);
+
+            // Add fusion router interface label (left side of connection)
+            const fusionInterfaceLabel = formatInterfaceLabel(config);
+            if (fusionInterfaceLabel) {
+                const fusionIfBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                const labelWidth = fusionInterfaceLabel.length * 5.5 + 10;
+                fusionIfBg.setAttribute('x', x1 + 8);
+                fusionIfBg.setAttribute('y', y1 - 10);
+                fusionIfBg.setAttribute('width', labelWidth);
+                fusionIfBg.setAttribute('height', '16');
+                fusionIfBg.setAttribute('class', 'interface-label-bg');
+                connGroup.appendChild(fusionIfBg);
+
+                const fusionIfText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                fusionIfText.setAttribute('x', x1 + 8 + labelWidth / 2);
+                fusionIfText.setAttribute('y', y1 - 1);
+                fusionIfText.setAttribute('class', 'interface-label');
+                fusionIfText.textContent = fusionInterfaceLabel;
+                connGroup.appendChild(fusionIfText);
+            }
+
+            // Add border VLAN interface label (right side of connection)
+            const borderIfBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            const borderLabel = `VLAN ${config.border_vlan_id}`;
+            const borderLabelWidth = borderLabel.length * 5.5 + 10;
+            borderIfBg.setAttribute('x', x2 - borderLabelWidth - 8);
+            borderIfBg.setAttribute('y', y2 - 10);
+            borderIfBg.setAttribute('width', borderLabelWidth);
+            borderIfBg.setAttribute('height', '16');
+            borderIfBg.setAttribute('class', 'interface-label-bg');
+            connGroup.appendChild(borderIfBg);
+
+            const borderIfText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            borderIfText.setAttribute('x', x2 - borderLabelWidth / 2 - 8);
+            borderIfText.setAttribute('y', y2 - 1);
+            borderIfText.setAttribute('class', 'interface-port-label');
+            borderIfText.textContent = borderLabel;
+            connGroup.appendChild(borderIfText);
 
             // Delete button
             const deleteBtn = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -1926,13 +2465,64 @@
                     };
                 }
 
+                // Collect OSPF parameters
+                let ospfParams = null;
+                if (document.getElementById('enableIbgp')?.checked) {
+                    const ospfMode = document.querySelector('input[name="ospfInterfaceMode"]:checked').value;
+
+                    ospfParams = {
+                        enabled: true,
+                        process_id: parseInt(document.getElementById('ospfProcessId').value),
+                        area: parseInt(document.getElementById('ospfArea').value),
+                        interface_mode: ospfMode,
+                        router1_interface: document.getElementById('ospfRouter1Interface').value.trim(),
+                        router1_ip: document.getElementById('ospfRouter1Ip').value.trim(),
+                        router2_interface: document.getElementById('ospfRouter2Interface').value.trim(),
+                        router2_ip: document.getElementById('ospfRouter2Ip').value.trim(),
+                        subnet_mask: document.getElementById('ospfSubnetMask').value,
+                        bfd_enabled: document.getElementById('ospfBfdEnabled').checked,
+                        bfd_interval: parseInt(document.getElementById('ospfBfdInterval').value),
+                        bfd_min_rx: parseInt(document.getElementById('ospfBfdMinRx').value),
+                        bfd_multiplier: parseInt(document.getElementById('ospfBfdMultiplier').value),
+                        authentication: document.getElementById('ospfAuth').value
+                    };
+
+                    // Add VLAN ID for SVI and subinterface modes
+                    if (ospfMode === 'svi' || ospfMode === 'subinterface') {
+                        ospfParams.vlan_id = parseInt(document.getElementById('ospfVlanId').value);
+                    }
+
+                    // Add cost if provided
+                    const costValue = document.getElementById('ospfCost').value.trim();
+                    if (costValue) {
+                        ospfParams.cost = parseInt(costValue);
+                    }
+
+                    // Add MD5 authentication params if enabled
+                    if (ospfParams.authentication === 'md5') {
+                        ospfParams.md5_key_id = parseInt(document.getElementById('ospfKeyId').value);
+                        ospfParams.md5_key = document.getElementById('ospfKeyString').value.trim();
+
+                        if (!ospfParams.md5_key) {
+                            throw new Error('MD5 key is required when MD5 authentication is enabled');
+                        }
+                    }
+
+                    // Validate required fields
+                    if (!ospfParams.router1_interface || !ospfParams.router1_ip ||
+                        !ospfParams.router2_interface || !ospfParams.router2_ip) {
+                        throw new Error('All OSPF interface fields are required');
+                    }
+                }
+
                 // Prepare request data
                 const requestData = {
                     fusion_routers: fusionRouters,
                     border_nodes: borderNodeConfigs,
                     handoffs: handoffs,
                     vrf_configs: vrfConfigs,
-                    ibgp_params: ibgpParams
+                    ibgp_params: ibgpParams,
+                    ospf_params: ospfParams
                 };
 
                 const response = await fetch('/generate', {
