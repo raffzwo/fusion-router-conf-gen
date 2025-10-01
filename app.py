@@ -8,6 +8,7 @@ that peer with SDA fabric border nodes.
 import os
 import re
 import ipaddress
+import json
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
@@ -24,6 +25,62 @@ ALLOWED_EXTENSIONS = {'txt', 'cfg', 'conf'}
 def allowed_file(filename):
     """Check if uploaded file has an allowed extension."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def ensure_outputs_directory():
+    """Create outputs directory if it doesn't exist."""
+    outputs_dir = os.path.join(os.path.dirname(__file__), 'outputs')
+    if not os.path.exists(outputs_dir):
+        os.makedirs(outputs_dir)
+    return outputs_dir
+
+
+def generate_timestamp():
+    """Generate timestamp for filenames."""
+    return datetime.now().strftime('%Y%m%d-%H%M%S')
+
+
+def save_config_to_file(config, hostname, timestamp):
+    """
+    Save configuration to outputs directory.
+
+    Args:
+        config: Configuration text
+        hostname: Fusion router hostname
+        timestamp: Timestamp string
+
+    Returns:
+        filepath: Path to saved file
+    """
+    outputs_dir = ensure_outputs_directory()
+    filename = f"{hostname}-config-{timestamp}.txt"
+    filepath = os.path.join(outputs_dir, filename)
+
+    with open(filepath, 'w') as f:
+        f.write(config)
+
+    return filepath
+
+
+def save_generation_summary(summary_data, timestamp):
+    """
+    Save generation summary as JSON.
+
+    Args:
+        summary_data: Dict with generation details
+        timestamp: Timestamp string
+
+    Returns:
+        filepath: Path to saved summary file
+    """
+    outputs_dir = ensure_outputs_directory()
+    filename = f"generation-summary-{timestamp}.json"
+    filepath = os.path.join(outputs_dir, filename)
+
+    with open(filepath, 'w') as f:
+        json.dump(summary_data, f, indent=2)
+
+    return filepath
 
 
 class CiscoConfigParser:
@@ -443,7 +500,61 @@ def build_vrf_config(vrf_params):
     return vrf_config
 
 
-def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, vrf_configs):
+def build_ibgp_configs(fusion_routers, ibgp_params):
+    """
+    Build iBGP configuration for both fusion routers.
+
+    Args:
+        fusion_routers: List of fusion router configurations
+        ibgp_params: Dict with iBGP parameters from user input
+            {
+                'enabled': True,
+                'bfd_enabled': True,
+                'bfd_interval': 250,
+                'bfd_min_rx': 250,
+                'bfd_multiplier': 3
+            }
+
+    Returns:
+        List of iBGP configurations, one per router
+    """
+    if not ibgp_params or not ibgp_params.get('enabled') or len(fusion_routers) < 2:
+        return []
+
+    # Validate that both routers use the same AS
+    as_numbers = [fr['as_number'] for fr in fusion_routers]
+    if len(set(as_numbers)) > 1:
+        raise ValueError(
+            f"iBGP requires both fusion routers to use the same AS number. "
+            f"Found: {', '.join(as_numbers)}"
+        )
+
+    ibgp_configs = []
+
+    for i, router in enumerate(fusion_routers):
+        # Determine peer router
+        peer_router = fusion_routers[1] if i == 0 else fusion_routers[0]
+
+        # Loopback-based iBGP (recommended and simpler)
+        config = {
+            'enabled': True,
+            'router_id': router['router_id'],
+            'peering_type': 'loopback',
+            'peer_hostname': peer_router['hostname'],
+            'peer_ip': peer_router['bgp_router_id'],
+            'update_source': 'Loopback0',
+            'bfd_enabled': ibgp_params.get('bfd_enabled', True),
+            'bfd_interval': ibgp_params.get('bfd_interval', 250),
+            'bfd_min_rx': ibgp_params.get('bfd_min_rx', 250),
+            'bfd_multiplier': ibgp_params.get('bfd_multiplier', 3)
+        }
+
+        ibgp_configs.append(config)
+
+    return ibgp_configs
+
+
+def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, vrf_configs, ibgp_config=None):
     """
     Generate complete Cisco IOS configuration for fusion router(s).
 
@@ -457,6 +568,8 @@ def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, 
             }
         border_nodes: List of parsed border node configurations
         handoffs: List of handoff configurations
+        vrf_configs: List of VRF configurations
+        ibgp_config: Dict with iBGP configuration (optional)
             [
                 {
                     'border_hostname': 'bn-01',
@@ -617,11 +730,13 @@ def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, 
             source_interface = f"{parent_if}.{subif_id}"
 
         # Prepare BGP neighbor configuration
+        # Enable next-hop-self for eBGP neighbors when iBGP is configured
         neighbor_data = {
             'ip': vlan_info['ip_address'],  # Border node IP
             'remote_as': border_node['bgp']['as_number'],
             'source_interface': source_interface,
-            'vrf': handoff['vrf_name']
+            'vrf': handoff['vrf_name'],
+            'next_hop_self': ibgp_config and ibgp_config.get('enabled', False)
         }
 
         if handoff['vrf_name']:
@@ -647,6 +762,7 @@ def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, 
         bgp_neighbors_default=bgp_neighbors_default,
         bgp_neighbors_vrf=bgp_neighbors_vrf,
         vrf_definitions=vrf_definitions,
+        ibgp_config=ibgp_config,
         timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     )
 
@@ -712,23 +828,92 @@ def generate_config():
         if not data.get('vrf_configs'):
             return jsonify({'error': 'VRF configurations are required'}), 400
 
+        # Build iBGP configurations if enabled
+        ibgp_configs = []
+        if data.get('ibgp_params') and data['ibgp_params'].get('enabled'):
+            try:
+                ibgp_configs = build_ibgp_configs(
+                    fusion_routers=data['fusion_routers'],
+                    ibgp_params=data['ibgp_params']
+                )
+            except ValueError as e:
+                return jsonify({'error': str(e)}), 400
+
         # Generate configurations for each fusion router
         configs = {}
         fusion_routers = data['fusion_routers']
 
         for router_params in fusion_routers:
             try:
+                # Find iBGP config for this router
+                router_ibgp_config = None
+                for ic in ibgp_configs:
+                    if ic['router_id'] == router_params['router_id']:
+                        router_ibgp_config = ic
+                        break
+
                 config = generate_fusion_router_config(
                     fusion_router_params=router_params,
                     border_nodes=data['border_nodes'],
                     handoffs=data['handoffs'],
-                    vrf_configs=data['vrf_configs']
+                    vrf_configs=data['vrf_configs'],
+                    ibgp_config=router_ibgp_config
                 )
                 configs[router_params['hostname']] = config
             except Exception as e:
                 return jsonify({'error': f"Error generating config for {router_params['hostname']}: {str(e)}"}), 500
 
-        return jsonify({'configs': configs})
+        # Generate timestamp for this generation
+        timestamp = generate_timestamp()
+
+        # Save each fusion router config
+        saved_files = []
+        for hostname, config in configs.items():
+            # Save to outputs directory
+            filepath = save_config_to_file(config, hostname, timestamp)
+            saved_files.append({
+                'hostname': hostname,
+                'filepath': filepath,
+                'filename': os.path.basename(filepath)
+            })
+
+            # Log the save
+            print(f"Config saved: {filepath}")
+
+        # Create summary data
+        interface_mode = data['handoffs'][0]['interface_mode'] if data['handoffs'] else 'unknown'
+
+        # Build fusion router summary
+        fusion_router_summary = []
+        for idx, router_params in enumerate(fusion_routers):
+            router_handoffs = [h for h in data['handoffs'] if h['fusion_router_id'] == router_params['router_id']]
+            unique_vrfs = list(set([h['vrf_name'] for h in router_handoffs]))
+
+            fusion_router_summary.append({
+                'hostname': router_params['hostname'],
+                'config_file': saved_files[idx]['filename'],
+                'interface_mode': interface_mode,
+                'handoff_count': len(router_handoffs),
+                'vrfs': unique_vrfs
+            })
+
+        summary_data = {
+            'timestamp': datetime.now().isoformat(),
+            'border_nodes': [bn['hostname'] for bn in data['border_nodes']],
+            'fusion_routers': fusion_router_summary,
+            'interface_mode': interface_mode,
+            'total_handoffs': len(data['handoffs'])
+        }
+
+        # Save summary
+        summary_filepath = save_generation_summary(summary_data, timestamp)
+        print(f"Summary saved: {summary_filepath}")
+
+        return jsonify({
+            'configs': configs,
+            'saved_files': saved_files,
+            'summary_file': os.path.basename(summary_filepath)
+        })
 
     except Exception as e:
         return jsonify({'error': f'Error generating configuration: {str(e)}'}), 500
@@ -754,6 +939,64 @@ def download_config():
 
     except Exception as e:
         return jsonify({'error': f'Error downloading configuration: {str(e)}'}), 500
+
+
+@app.route('/outputs', methods=['GET'])
+def list_outputs():
+    """List all saved configuration files."""
+    try:
+        outputs_dir = ensure_outputs_directory()
+
+        files = []
+        for filename in os.listdir(outputs_dir):
+            if filename.endswith('.txt') or filename.endswith('.json'):
+                filepath = os.path.join(outputs_dir, filename)
+                files.append({
+                    'filename': filename,
+                    'size': os.path.getsize(filepath),
+                    'modified': datetime.fromtimestamp(os.path.getmtime(filepath)).isoformat()
+                })
+
+        # Sort by modification time, newest first
+        files.sort(key=lambda x: x['modified'], reverse=True)
+
+        return jsonify({'files': files})
+
+    except Exception as e:
+        return jsonify({'error': f'Error listing outputs: {str(e)}'}), 500
+
+
+@app.route('/outputs/<filename>', methods=['GET'])
+def download_saved_config(filename):
+    """Download a previously saved config."""
+    try:
+        outputs_dir = ensure_outputs_directory()
+        filepath = os.path.join(outputs_dir, filename)
+
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'File not found'}), 404
+
+        return send_file(filepath, as_attachment=True, download_name=filename)
+
+    except Exception as e:
+        return jsonify({'error': f'Error downloading saved config: {str(e)}'}), 500
+
+
+@app.route('/outputs/<filename>', methods=['DELETE'])
+def delete_saved_config(filename):
+    """Delete a saved config file."""
+    try:
+        outputs_dir = ensure_outputs_directory()
+        filepath = os.path.join(outputs_dir, filename)
+
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'File not found'}), 404
+
+        os.remove(filepath)
+        return jsonify({'success': True, 'message': f'Deleted {filename}'})
+
+    except Exception as e:
+        return jsonify({'error': f'Error deleting config: {str(e)}'}), 500
 
 
 if __name__ == '__main__':

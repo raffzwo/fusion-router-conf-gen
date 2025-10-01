@@ -27,9 +27,9 @@ vrf definition {{ vrf.name }}
 {%- endfor %}
 {% endif %}
 !
-! Loopback interface for BGP router ID
+! Loopback interface for BGP router ID and iBGP peering
 interface Loopback0
- description BGP Router ID
+ description BGP Router ID and iBGP peering endpoint
  ip address {{ router_id }} 255.255.255.255
 !
 {% if interface_mode == 'svi' %}
@@ -110,13 +110,30 @@ router bgp {{ as_number }}
  neighbor {{ neighbor.ip }} fall-over bfd
 {%- endfor %}
 {%- endif %}
+{%- if ibgp_config and ibgp_config.enabled %}
+ !
+ ! iBGP peer configuration
+ neighbor {{ ibgp_config.peer_ip }} remote-as {{ as_number }}
+ neighbor {{ ibgp_config.peer_ip }} description iBGP peer - {{ ibgp_config.peer_hostname }}
+ neighbor {{ ibgp_config.peer_ip }} update-source {{ ibgp_config.update_source }}
+ neighbor {{ ibgp_config.peer_ip }} fall-over bfd
+{%- endif %}
  !
  address-family ipv4
 {%- if bgp_neighbors_default %}
 {%- for neighbor in bgp_neighbors_default %}
   neighbor {{ neighbor.ip }} activate
   neighbor {{ neighbor.ip }} send-community both
+{%- if neighbor.next_hop_self %}
+  neighbor {{ neighbor.ip }} next-hop-self
+{%- endif %}
 {%- endfor %}
+{%- endif %}
+{%- if ibgp_config and ibgp_config.enabled %}
+  !
+  ! iBGP peer activation
+  neighbor {{ ibgp_config.peer_ip }} activate
+  neighbor {{ ibgp_config.peer_ip }} send-community both
 {%- endif %}
  exit-address-family
 {%- if bgp_neighbors_vrf %}
@@ -130,7 +147,18 @@ router bgp {{ as_number }}
   neighbor {{ neighbor.ip }} fall-over bfd
   neighbor {{ neighbor.ip }} activate
   neighbor {{ neighbor.ip }} send-community both
+{%- if neighbor.next_hop_self %}
+  neighbor {{ neighbor.ip }} next-hop-self
+{%- endif %}
 {%- endfor %}
+{%- if ibgp_config and ibgp_config.enabled %}
+  !
+  ! iBGP peer in VRF {{ vrf_name }}
+  neighbor {{ ibgp_config.peer_ip }} remote-as {{ as_number }}
+  neighbor {{ ibgp_config.peer_ip }} description iBGP peer - {{ ibgp_config.peer_hostname }}
+  neighbor {{ ibgp_config.peer_ip }} activate
+  neighbor {{ ibgp_config.peer_ip }} send-community both
+{%- endif %}
  exit-address-family
 {%- endfor %}
 {%- endif %}

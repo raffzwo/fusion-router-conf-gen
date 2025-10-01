@@ -114,6 +114,379 @@
         .router-config-tab {
             margin-top: 1rem;
         }
+        /* Network Topology Diagram Styles */
+        .topology-wrapper {
+            height: calc(100vh - 250px);
+            min-height: 600px;
+            display: flex;
+            gap: 0;
+        }
+
+        /* Left Sidebar for Border Interfaces */
+        .border-interfaces-sidebar {
+            width: 320px;
+            background-color: white;
+            border-right: 2px solid #dee2e6;
+            overflow-y: auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom: 2px solid #5568d3;
+        }
+        .sidebar-header h6 {
+            margin: 0 0 0.75rem 0;
+            font-weight: 600;
+        }
+        .sidebar-search {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 0.25rem;
+            background: rgba(255,255,255,0.9);
+        }
+        .border-nodes-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+        .border-node-section {
+            margin-bottom: 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            background: white;
+        }
+        .border-node-header {
+            padding: 0.75rem;
+            background: #f8f9fa;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            border-bottom: 1px solid #dee2e6;
+            transition: background 0.2s;
+        }
+        .border-node-header:hover {
+            background: #e9ecef;
+        }
+        .border-node-header .toggle-icon {
+            transition: transform 0.2s;
+        }
+        .border-node-header.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+        .interface-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .interface-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f1f3f5;
+            cursor: move;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .interface-item:last-child {
+            border-bottom: none;
+        }
+        .interface-item:hover {
+            background: #f8f9fa;
+            transform: translateX(2px);
+        }
+        .interface-item.dragging {
+            opacity: 0.5;
+            background: #e7f5ff;
+        }
+        .interface-item.configured {
+            background: #d3f9d8;
+            border-left: 4px solid #28a745;
+        }
+        .interface-item.configured::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #28a745;
+        }
+        .interface-vlan {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.95rem;
+        }
+        .interface-ip {
+            font-size: 0.85rem;
+            color: #495057;
+            margin: 0.25rem 0;
+        }
+        .interface-vrf {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+        .interface-vrf.global {
+            background: #e9ecef;
+            color: #495057;
+        }
+        .interface-vrf.vrf {
+            background: #764ba2;
+            color: white;
+        }
+
+        /* Topology Canvas */
+        .topology-canvas {
+            flex: 1;
+            background-color: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+        }
+        .topology-controls {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .topology-controls button {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        .zoom-level {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #495057;
+            min-width: 60px;
+            text-align: center;
+        }
+        #topologyContainer {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            cursor: grab;
+        }
+        #topologyContainer.panning {
+            cursor: grabbing;
+        }
+        #topologySvg {
+            display: block;
+        }
+
+        /* Device Nodes */
+        .device-node {
+            cursor: default;
+        }
+        .device-node.fusion-router {
+            cursor: pointer;
+        }
+        .device-node.fusion-router.drag-over {
+            filter: drop-shadow(0 0 10px rgba(40, 167, 69, 0.6));
+        }
+        .device-rect {
+            fill: white;
+            stroke: #667eea;
+            stroke-width: 2;
+            rx: 8;
+            transition: all 0.2s;
+        }
+        .device-node.fusion-router .device-rect {
+            stroke: #764ba2;
+        }
+        .device-node.fusion-router.drag-over .device-rect {
+            fill: #d3f9d8;
+            stroke: #28a745;
+            stroke-width: 3;
+        }
+        .device-label {
+            font-size: 14px;
+            font-weight: 600;
+            fill: #333;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+        .device-type {
+            font-size: 11px;
+            fill: #6c757d;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+
+        /* Connection Lines */
+        .connection-path {
+            fill: none;
+            stroke-width: 2.5;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .connection-path.configured {
+            stroke: #28a745;
+        }
+        .connection-path.unconfigured {
+            stroke: #adb5bd;
+            stroke-dasharray: 8,4;
+        }
+        .connection-path:hover {
+            stroke-width: 4;
+            filter: brightness(1.2);
+        }
+        .connection-group {
+            pointer-events: all;
+        }
+        .connection-label-bg {
+            fill: white;
+            stroke: #dee2e6;
+            stroke-width: 1;
+            rx: 3;
+        }
+        .connection-label-text {
+            font-size: 10px;
+            font-weight: 600;
+            text-anchor: middle;
+            fill: #495057;
+            pointer-events: none;
+        }
+        .connection-vrf-badge {
+            font-size: 9px;
+            font-weight: 600;
+            text-anchor: middle;
+            fill: white;
+            pointer-events: none;
+        }
+        .connection-dot {
+            transition: all 0.2s ease;
+            r: 4;
+        }
+        .connection-dot.configured {
+            fill: #28a745;
+        }
+        .connection-dot.unconfigured {
+            fill: #adb5bd;
+        }
+        .connection-delete-btn {
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .connection-group:hover .connection-delete-btn {
+            opacity: 1;
+        }
+        .connection-delete-circle {
+            fill: #dc3545;
+            stroke: white;
+            stroke-width: 2;
+        }
+        .connection-delete-icon {
+            fill: white;
+            font-size: 12px;
+            font-weight: 900;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+
+        /* Drag Ghost Line */
+        #dragGhostLine {
+            stroke: #667eea;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Legend */
+        .topology-legend {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 2rem;
+            font-size: 0.875rem;
+            z-index: 10;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .legend-line {
+            width: 40px;
+            height: 3px;
+        }
+        .legend-line.unconfigured {
+            background: repeating-linear-gradient(
+                to right,
+                #adb5bd 0,
+                #adb5bd 5px,
+                transparent 5px,
+                transparent 10px
+            );
+        }
+        .legend-line.configured {
+            background: #28a745;
+        }
+
+        /* Scrollbar Styling */
+        .border-interfaces-sidebar::-webkit-scrollbar,
+        .interface-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .border-interfaces-sidebar::-webkit-scrollbar-track,
+        .interface-list::-webkit-scrollbar-track {
+            background: #f1f3f5;
+        }
+        .border-interfaces-sidebar::-webkit-scrollbar-thumb,
+        .interface-list::-webkit-scrollbar-thumb {
+            background: #adb5bd;
+            border-radius: 4px;
+        }
+        .border-interfaces-sidebar::-webkit-scrollbar-thumb:hover,
+        .interface-list::-webkit-scrollbar-thumb:hover {
+            background: #868e96;
+        }
+
+        /* Full-width layout for Step 4 */
+        #step4 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            background: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        #step4 .card {
+            flex-shrink: 0;
+            margin: 0;
+            border-radius: 0;
+            border: none;
+            border-bottom: 2px solid #dee2e6;
+        }
+        #step4 .topology-wrapper {
+            flex: 1;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -124,7 +497,7 @@
         </div>
     </div>
 
-    <div class="container">
+    <div class="container" id="mainContainer">
         <!-- Step Indicator -->
         <div class="step-indicator">
             <div class="step active" id="step1-indicator">
@@ -198,7 +571,58 @@
 
                     <div id="fusionRouterConfigs"></div>
 
-                    <button class="btn btn-primary" onclick="proceedToStep3()">
+                    <!-- iBGP Configuration Section -->
+                    <div id="ibgpConfigSection" style="display: none;">
+                        <div class="card mt-3">
+                            <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <h6 class="mb-0"><i class="fas fa-exchange-alt"></i> iBGP Configuration Between Fusion Routers</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enableIbgp"
+                                           onchange="toggleIbgpConfig()">
+                                    <label class="form-check-label" for="enableIbgp">
+                                        <strong>Enable iBGP peering between fusion routers</strong>
+                                    </label>
+                                    <div class="form-text">Creates route exchange between redundant fusion routers</div>
+                                </div>
+
+                                <div id="ibgpConfigFields" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Note:</strong> Both fusion routers must use the same BGP AS number for iBGP.
+                                        iBGP peering will use Loopback0 addresses for stability.
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Router 1 Loopback0 IP</label>
+                                            <input type="text" class="form-control" id="ibgpRouter1Loopback"
+                                                   readonly style="background-color: #f8f9fa;">
+                                            <div class="form-text">Auto-populated from BGP Router ID</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Router 2 Loopback0 IP</label>
+                                            <input type="text" class="form-control" id="ibgpRouter2Loopback"
+                                                   readonly style="background-color: #f8f9fa;">
+                                            <div class="form-text">Auto-populated from BGP Router ID</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- BFD Configuration -->
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="ibgpBfdEnabled" checked>
+                                        <label class="form-check-label" for="ibgpBfdEnabled">
+                                            <strong>Enable BFD for iBGP sessions</strong>
+                                        </label>
+                                        <div class="form-text">Bidirectional Forwarding Detection for fast failure detection</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary mt-3" onclick="proceedToStep3()">
                         <i class="fas fa-arrow-right"></i> Next: Select Interface Mode
                     </button>
                 </div>
@@ -269,18 +693,89 @@
         <!-- Step 4: Handoff Mapping -->
         <div id="step4" class="step-content" style="display: none;">
             <div class="card">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-network-wired"></i> Step 4: Handoff Mapping Configuration</h5>
+                    <div>
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="showStep(3)">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="proceedToStep5()">
+                            <i class="fas fa-arrow-right"></i> Next: Configure VRFs
+                        </button>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <p>Map border node VLAN interfaces to fusion router interfaces</p>
-                    <div id="handoffMappingTable"></div>
-                    <button class="btn btn-secondary me-2" onclick="showStep(3)">
-                        <i class="fas fa-arrow-left"></i> Back
-                    </button>
-                    <button class="btn btn-primary" onclick="proceedToStep5()">
-                        <i class="fas fa-arrow-right"></i> Next: Configure VRFs
-                    </button>
+            </div>
+
+            <div class="topology-wrapper">
+                <!-- Left Sidebar: Border Node Interfaces -->
+                <div class="border-interfaces-sidebar">
+                    <div class="sidebar-header">
+                        <h6><i class="fas fa-list"></i> Border Node Interfaces</h6>
+                        <input type="search"
+                               class="sidebar-search"
+                               id="interfaceSearch"
+                               placeholder="Search VLAN, IP, or VRF..."
+                               onkeyup="filterInterfaces()">
+                    </div>
+                    <div class="border-nodes-list" id="borderNodesList">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Right Canvas: Topology Diagram -->
+                <div class="topology-canvas">
+                    <div class="topology-controls">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="zoomIn()" title="Zoom In">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="zoomOut()" title="Zoom Out">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="resetZoom()" title="Reset View">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <span class="zoom-level" id="zoomLevel">100%</span>
+                    </div>
+
+                    <div id="topologyContainer">
+                        <!-- SVG will be created here -->
+                    </div>
+
+                    <div class="topology-legend">
+                        <div class="legend-item">
+                            <div class="legend-line unconfigured"></div>
+                            <span>Unconfigured</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line configured"></div>
+                            <span>Configured</span>
+                        </div>
+                        <div class="legend-item">
+                            <i class="fas fa-mouse-pointer" style="color: #667eea;"></i>
+                            <span>Drag & Drop to Connect</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Configuration Modal -->
+        <div class="modal fade" id="connectionModal" tabindex="-1" aria-labelledby="connectionModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="connectionModalLabel">Configure Connection</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="connectionConfigForm"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="saveConnectionConfig()">
+                            <i class="fas fa-save"></i> Save Configuration
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -337,6 +832,20 @@
         let generatedConfigs = {};
         let fusionRouters = [];
         let handoffs = [];
+        let connectionConfigs = {}; // Stores config for each connection
+        let currentConnection = null; // Currently selected connection for modal
+        let currentInterfaceMode = 'routed'; // Selected interface mode
+
+        // Topology visualization state
+        let zoomLevel = 1.0;
+        let panX = 0;
+        let panY = 0;
+        let isPanning = false;
+        let lastPanX = 0;
+        let lastPanY = 0;
+        let isDragging = false;
+        let currentDragData = null;
+        let fusionRouterPositions = {}; // Store fusion router SVG positions for drop detection
 
         function showStep(stepNumber) {
             // Hide all steps
@@ -456,6 +965,42 @@
             }
 
             container.innerHTML = html;
+
+            // Show/hide iBGP section based on number of routers
+            const ibgpSection = document.getElementById('ibgpConfigSection');
+            if (numRouters === 2) {
+                ibgpSection.style.display = 'block';
+            } else {
+                ibgpSection.style.display = 'none';
+                document.getElementById('enableIbgp').checked = false;
+                document.getElementById('ibgpConfigFields').style.display = 'none';
+            }
+        }
+
+        function toggleIbgpConfig() {
+            const enabled = document.getElementById('enableIbgp').checked;
+            const numRouters = parseInt(document.getElementById('numFusionRouters').value);
+
+            if (enabled && numRouters < 2) {
+                alert('iBGP requires at least 2 fusion routers');
+                document.getElementById('enableIbgp').checked = false;
+                return;
+            }
+
+            document.getElementById('ibgpConfigFields').style.display = enabled ? 'block' : 'none';
+
+            if (enabled) {
+                // Auto-populate loopback IPs from BGP Router IDs
+                const routerId1 = document.getElementById('fusionRouterId1').value;
+                const routerId2 = document.getElementById('fusionRouterId2').value;
+
+                if (routerId1) {
+                    document.getElementById('ibgpRouter1Loopback').value = routerId1;
+                }
+                if (routerId2) {
+                    document.getElementById('ibgpRouter2Loopback').value = routerId2;
+                }
+            }
         }
 
         function proceedToStep3() {
@@ -488,6 +1033,14 @@
                 });
             }
 
+            // Validate AS numbers if iBGP is enabled
+            if (numRouters === 2 && document.getElementById('enableIbgp')?.checked) {
+                if (fusionRouters[0].as_number !== fusionRouters[1].as_number) {
+                    alert('iBGP requires both fusion routers to use the SAME BGP AS number');
+                    return;
+                }
+            }
+
             showStep(3);
         }
 
@@ -502,104 +1055,737 @@
         }
 
         function proceedToStep4() {
-            const interfaceMode = getSelectedInterfaceMode();
-            displayHandoffMappingTable(interfaceMode);
+            currentInterfaceMode = getSelectedInterfaceMode();
+            initializeTopologyDiagram();
             showStep(4);
         }
 
-        function displayHandoffMappingTable(interfaceMode) {
-            const container = document.getElementById('handoffMappingTable');
-            let html = '<div class="table-responsive"><table class="table table-striped handoff-table">';
+        // ============================================
+        // TOPOLOGY DIAGRAM - ENHANCED VERSION
+        // ============================================
 
-            // Build table header based on mode
-            html += '<thead><tr>';
-            html += '<th>Enable</th>';
-            html += '<th>Border Node</th>';
-            html += '<th>Border VLAN</th>';
-            html += '<th>Border VRF Status</th>';
-            html += '<th>Fusion Router</th>';
-            html += '<th>Fusion VRF Name *</th>';
+        function initializeTopologyDiagram() {
+            connectionConfigs = {};
+            zoomLevel = 1.0;
+            panX = 0;
+            panY = 0;
+            renderSidebarInterfaces();
+            renderTopologyDiagram();
+            initializePanZoom();
+        }
 
-            if (interfaceMode === 'routed') {
-                html += '<th>Fusion Interface *</th>';
-            } else if (interfaceMode === 'svi') {
-                html += '<th>Fusion VLAN ID *</th>';
-                html += '<th>Physical Interface *</th>';
-            } else if (interfaceMode === 'subinterface') {
-                html += '<th>Parent Interface *</th>';
-                html += '<th>Subinterface ID *</th>';
-            }
+        function renderSidebarInterfaces() {
+            const container = document.getElementById('borderNodesList');
+            let html = '';
 
-            html += '<th>Border IP</th>';
-            html += '<th>Fusion IP</th>';
-            html += '</tr></thead><tbody>';
+            borderNodeConfigs.forEach((borderNode, idx) => {
+                const sectionId = `border-section-${idx}`;
+                html += `
+                    <div class="border-node-section">
+                        <div class="border-node-header" onclick="toggleBorderSection('${sectionId}')">
+                            <span><i class="fas fa-server"></i> ${borderNode.hostname}</span>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
+                        </div>
+                        <div class="interface-list" id="${sectionId}">
+                `;
 
-            // Build table rows
-            let rowIndex = 0;
-            borderNodeConfigs.forEach(config => {
-                config.vlan_interfaces.forEach(vlan => {
-                    const fusionIp = calculateFusionIP(vlan.ip_address);
-                    const vrfStatus = vlan.vrf || 'Global Table';
-                    const needsVrfInput = !vlan.vrf;
+                borderNode.vlan_interfaces.forEach((vlan, vIdx) => {
+                    const interfaceKey = `${borderNode.hostname}_${vlan.vlan}`;
+                    const isConfigured = isInterfaceConfigured(borderNode.hostname, vlan.vlan);
+                    const vrfClass = vlan.vrf ? 'vrf' : 'global';
+                    const vrfText = vlan.vrf || 'Global Table';
 
-                    html += `<tr>`;
-                    html += `<td><input type="checkbox" class="form-check-input handoff-checkbox"
-                                      id="handoff_${rowIndex}" checked
-                                      data-border-hostname="${config.hostname}"
-                                      data-border-vlan="${vlan.vlan}"
-                                      data-border-ip="${vlan.ip_address}"
-                                      data-fusion-ip="${fusionIp}"
-                                      data-border-vrf="${vlan.vrf || ''}"
-                                      data-subnet-mask="${vlan.subnet_mask}"></td>`;
-                    html += `<td>${config.hostname}</td>`;
-                    html += `<td>VLAN ${vlan.vlan}</td>`;
-                    html += `<td><span class="badge ${vlan.vrf ? 'vrf-badge' : 'bg-secondary'}">${vrfStatus}</span></td>`;
-
-                    // Fusion router selector
-                    html += `<td><select class="form-select form-select-sm" id="fr_${rowIndex}">`;
-                    fusionRouters.forEach(fr => {
-                        html += `<option value="${fr.router_id}">${fr.hostname}</option>`;
-                    });
-                    html += `</select></td>`;
-
-                    // Fusion VRF Name
-                    html += `<td><input type="text" class="form-control form-control-sm"
-                                       id="vrf_${rowIndex}"
-                                       placeholder="${needsVrfInput ? 'Required (e.g., INTERNET)' : vlan.vrf || 'INTERNET'}"
-                                       value="${vlan.vrf || ''}"
-                                       ${needsVrfInput ? 'required' : ''}></td>`;
-
-                    // Interface-specific fields
-                    if (interfaceMode === 'routed') {
-                        html += `<td><input type="text" class="form-control form-control-sm"
-                                           id="if_${rowIndex}"
-                                           placeholder="GigabitEthernet0/0/1" required></td>`;
-                    } else if (interfaceMode === 'svi') {
-                        html += `<td><input type="text" class="form-control form-control-sm"
-                                           id="vlan_${rowIndex}"
-                                           placeholder="100" required></td>`;
-                        html += `<td><input type="text" class="form-control form-control-sm"
-                                           id="phys_${rowIndex}"
-                                           placeholder="GigabitEthernet0/0/1" required></td>`;
-                    } else if (interfaceMode === 'subinterface') {
-                        html += `<td><input type="text" class="form-control form-control-sm"
-                                           id="parent_${rowIndex}"
-                                           placeholder="GigabitEthernet0/0/1" required></td>`;
-                        html += `<td><input type="text" class="form-control form-control-sm"
-                                           id="subif_${rowIndex}"
-                                           value="${vlan.vlan}"></td>`;
-                    }
-
-                    html += `<td><span class="badge bg-info">${vlan.ip_address}</span></td>`;
-                    html += `<td><span class="badge bg-success">${fusionIp}</span></td>`;
-                    html += `</tr>`;
-
-                    rowIndex++;
+                    html += `
+                        <div class="interface-item ${isConfigured ? 'configured' : ''}"
+                             draggable="true"
+                             data-border-hostname="${borderNode.hostname}"
+                             data-vlan="${vlan.vlan}"
+                             data-ip="${vlan.ip_address}"
+                             data-vrf="${vlan.vrf || ''}"
+                             data-subnet-mask="${vlan.subnet_mask}"
+                             ondragstart="handleInterfaceDragStart(event)"
+                             ondragend="handleInterfaceDragEnd(event)">
+                            <div class="interface-vlan">VLAN ${vlan.vlan}</div>
+                            <div class="interface-ip">${vlan.ip_address}/${getMaskBits(vlan.subnet_mask)}</div>
+                            <span class="interface-vrf ${vrfClass}">${vrfText}</span>
+                        </div>
+                    `;
                 });
+
+                html += `
+                        </div>
+                    </div>
+                `;
             });
 
-            html += '</tbody></table></div>';
             container.innerHTML = html;
+        }
+
+        function isInterfaceConfigured(borderHostname, vlan) {
+            // Check if any connection exists for this border hostname + vlan
+            for (const key in connectionConfigs) {
+                const config = connectionConfigs[key];
+                if (config.border_hostname === borderHostname && config.border_vlan_id === vlan) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function getMaskBits(subnetMask) {
+            const masks = {
+                '255.255.255.252': '30',
+                '255.255.255.0': '24',
+                '255.255.0.0': '16',
+                '255.0.0.0': '8'
+            };
+            return masks[subnetMask] || '32';
+        }
+
+        function toggleBorderSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const header = section.previousElementSibling;
+
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                header.classList.remove('collapsed');
+            } else {
+                section.style.display = 'none';
+                header.classList.add('collapsed');
+            }
+        }
+
+        function filterInterfaces() {
+            const searchTerm = document.getElementById('interfaceSearch').value.toLowerCase();
+            const interfaceItems = document.querySelectorAll('.interface-item');
+
+            interfaceItems.forEach(item => {
+                const vlan = item.dataset.vlan;
+                const ip = item.dataset.ip;
+                const vrf = item.dataset.vrf;
+                const text = `vlan${vlan} ${ip} ${vrf}`.toLowerCase();
+
+                if (text.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function renderTopologyDiagram() {
+            const container = document.getElementById('topologyContainer');
+            container.innerHTML = '';
+
+            const width = 1200;
+            const height = 800;
+            const margin = { left: 150, right: 150, top: 100, bottom: 100 };
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('id', 'topologySvg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+            // Create main group for pan/zoom transformations
+            const mainGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            mainGroup.setAttribute('id', 'mainGroup');
+            svg.appendChild(mainGroup);
+
+            // Calculate positions
+            const fusionX = margin.left;
+            const borderX = width - margin.right;
+            const deviceWidth = 160;
+            const deviceHeight = 70;
+
+            const fusionCount = fusionRouters.length;
+            const borderCount = borderNodeConfigs.length;
+
+            const fusionSpacing = (height - margin.top - margin.bottom) / (fusionCount + 1);
+            const borderSpacing = (height - margin.top - margin.bottom) / (borderCount + 1);
+
+            // Draw connection lines layer
+            const connectionsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            connectionsGroup.setAttribute('id', 'connectionsGroup');
+            mainGroup.appendChild(connectionsGroup);
+
+            // Draw existing connections
+            Object.keys(connectionConfigs).forEach(connectionKey => {
+                const config = connectionConfigs[connectionKey];
+                drawConnection(connectionsGroup, config, fusionSpacing, borderSpacing, margin, deviceWidth, deviceHeight, width);
+            });
+
+            // Draw fusion routers
+            fusionRouterPositions = {};
+            fusionRouters.forEach((router, idx) => {
+                const y = margin.top + fusionSpacing * (idx + 1) - deviceHeight / 2;
+                const cx = fusionX + deviceWidth / 2;
+                const cy = y + deviceHeight / 2;
+
+                fusionRouterPositions[router.router_id] = { x: cx, y: cy, width: deviceWidth, height: deviceHeight };
+
+                const group = drawDevice(mainGroup, fusionX, y, deviceWidth, deviceHeight, router.hostname, 'Fusion Router', router.router_id);
+                svg.appendChild(group);
+            });
+
+            // Draw border nodes
+            borderNodeConfigs.forEach((node, idx) => {
+                const y = margin.top + borderSpacing * (idx + 1) - deviceHeight / 2;
+                const group = drawDevice(mainGroup, borderX - deviceWidth, y, deviceWidth, deviceHeight, node.hostname, 'Border Node', null);
+                svg.appendChild(group);
+            });
+
+            // Add ghost line for drag preview
+            const ghostLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            ghostLine.setAttribute('id', 'dragGhostLine');
+            ghostLine.setAttribute('x1', '0');
+            ghostLine.setAttribute('y1', '0');
+            ghostLine.setAttribute('x2', '0');
+            ghostLine.setAttribute('y2', '0');
+            ghostLine.style.display = 'none';
+            mainGroup.appendChild(ghostLine);
+
+            container.appendChild(svg);
+            updateZoomTransform();
+        }
+
+        function drawDevice(parentGroup, x, y, width, height, label, type, fusionRouterId) {
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.setAttribute('class', `device-node ${type === 'Fusion Router' ? 'fusion-router' : ''}`);
+
+            if (fusionRouterId) {
+                group.setAttribute('data-fusion-router-id', fusionRouterId);
+            }
+
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', x);
+            rect.setAttribute('y', y);
+            rect.setAttribute('width', width);
+            rect.setAttribute('height', height);
+            rect.setAttribute('class', 'device-rect');
+            group.appendChild(rect);
+
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', x + width / 2);
+            text.setAttribute('y', y + height / 2 - 5);
+            text.setAttribute('class', 'device-label');
+            text.textContent = label;
+            group.appendChild(text);
+
+            const typeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            typeText.setAttribute('x', x + width / 2);
+            typeText.setAttribute('y', y + height / 2 + 10);
+            typeText.setAttribute('class', 'device-type');
+            typeText.textContent = type;
+            group.appendChild(typeText);
+
+            parentGroup.appendChild(group);
+            return group;
+        }
+
+        function drawConnection(parentGroup, config, fusionSpacing, borderSpacing, margin, deviceWidth, deviceHeight, canvasWidth) {
+            const connectionKey = `${config.border_hostname}_${config.border_vlan_id}_${config.fusion_router_id}`;
+
+            // Find fusion router index
+            const fusionIdx = fusionRouters.findIndex(r => r.router_id === config.fusion_router_id);
+            // Find border node index
+            const borderIdx = borderNodeConfigs.findIndex(b => b.hostname === config.border_hostname);
+
+            if (fusionIdx === -1 || borderIdx === -1) return;
+
+            const fusionY = margin.top + fusionSpacing * (fusionIdx + 1);
+            const borderY = margin.top + borderSpacing * (borderIdx + 1);
+
+            const x1 = margin.left + deviceWidth;
+            const y1 = fusionY;
+            const x2 = canvasWidth - margin.right - deviceWidth;
+            const y2 = borderY;
+
+            // Create connection group
+            const connGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            connGroup.setAttribute('class', 'connection-group');
+            connGroup.setAttribute('data-connection-key', connectionKey);
+
+            // Curved path
+            const midX = (x1 + x2) / 2;
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+            path.setAttribute('d', d);
+            path.setAttribute('class', 'connection-path configured');
+            path.onclick = function() { editConnection(connectionKey); };
+            connGroup.appendChild(path);
+
+            // Connection dots
+            const dot1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot1.setAttribute('cx', x1);
+            dot1.setAttribute('cy', y1);
+            dot1.setAttribute('class', 'connection-dot configured');
+            connGroup.appendChild(dot1);
+
+            const dot2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot2.setAttribute('cx', x2);
+            dot2.setAttribute('cy', y2);
+            dot2.setAttribute('class', 'connection-dot configured');
+            connGroup.appendChild(dot2);
+
+            // Label group at midpoint
+            const labelX = midX;
+            const labelY = (y1 + y2) / 2;
+
+            // VLAN label background
+            const labelBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            labelBg.setAttribute('x', labelX - 35);
+            labelBg.setAttribute('y', labelY - 18);
+            labelBg.setAttribute('width', '70');
+            labelBg.setAttribute('height', '36');
+            labelBg.setAttribute('class', 'connection-label-bg');
+            connGroup.appendChild(labelBg);
+
+            // VLAN text
+            const vlanText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            vlanText.setAttribute('x', labelX);
+            vlanText.setAttribute('y', labelY - 4);
+            vlanText.setAttribute('class', 'connection-label-text');
+            vlanText.textContent = `VLAN ${config.border_vlan_id}`;
+            connGroup.appendChild(vlanText);
+
+            // VRF badge
+            const vrfText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            vrfText.setAttribute('x', labelX);
+            vrfText.setAttribute('y', labelY + 10);
+            vrfText.setAttribute('class', 'connection-vrf-badge');
+            vrfText.textContent = config.vrf_name || 'N/A';
+            vrfText.setAttribute('fill', '#764ba2');
+            connGroup.appendChild(vrfText);
+
+            // Delete button
+            const deleteBtn = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            deleteBtn.setAttribute('class', 'connection-delete-btn');
+            deleteBtn.onclick = function(e) {
+                e.stopPropagation();
+                deleteConnection(connectionKey);
+            };
+
+            const deleteCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            deleteCircle.setAttribute('cx', labelX + 40);
+            deleteCircle.setAttribute('cy', labelY - 10);
+            deleteCircle.setAttribute('r', '10');
+            deleteCircle.setAttribute('class', 'connection-delete-circle');
+            deleteBtn.appendChild(deleteCircle);
+
+            const deleteIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            deleteIcon.setAttribute('x', labelX + 40);
+            deleteIcon.setAttribute('y', labelY - 6);
+            deleteIcon.setAttribute('class', 'connection-delete-icon');
+            deleteIcon.textContent = '\u00D7';
+            deleteBtn.appendChild(deleteIcon);
+
+            connGroup.appendChild(deleteBtn);
+            parentGroup.appendChild(connGroup);
+        }
+
+        // ============================================
+        // DRAG AND DROP FUNCTIONALITY
+        // ============================================
+
+        function handleInterfaceDragStart(event) {
+            isDragging = true;
+            const item = event.target;
+            item.classList.add('dragging');
+
+            currentDragData = {
+                borderHostname: item.dataset.borderHostname,
+                vlan: item.dataset.vlan,
+                ip: item.dataset.ip,
+                vrf: item.dataset.vrf,
+                subnetMask: item.dataset.subnetMask
+            };
+
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', JSON.stringify(currentDragData));
+
+            // Setup drop zones
+            document.querySelectorAll('.device-node.fusion-router').forEach(node => {
+                node.addEventListener('dragover', handleDragOver);
+                node.addEventListener('drop', handleDrop);
+                node.addEventListener('dragleave', handleDragLeave);
+            });
+
+            // Setup SVG drag tracking for ghost line
+            const svg = document.getElementById('topologySvg');
+            svg.addEventListener('mousemove', updateGhostLine);
+        }
+
+        function handleInterfaceDragEnd(event) {
+            isDragging = false;
+            event.target.classList.remove('dragging');
+
+            // Hide ghost line
+            const ghostLine = document.getElementById('dragGhostLine');
+            if (ghostLine) {
+                ghostLine.style.display = 'none';
+            }
+
+            // Remove drop zone listeners
+            document.querySelectorAll('.device-node.fusion-router').forEach(node => {
+                node.removeEventListener('dragover', handleDragOver);
+                node.removeEventListener('drop', handleDrop);
+                node.removeEventListener('dragleave', handleDragLeave);
+                node.classList.remove('drag-over');
+            });
+
+            const svg = document.getElementById('topologySvg');
+            if (svg) {
+                svg.removeEventListener('mousemove', updateGhostLine);
+            }
+
+            currentDragData = null;
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(event) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            this.classList.remove('drag-over');
+
+            if (!currentDragData) return;
+
+            const fusionRouterId = parseInt(this.dataset.fusionRouterId);
+            const fusionRouter = fusionRouters.find(r => r.router_id === fusionRouterId);
+
+            if (!fusionRouter) return;
+
+            // Create connection key
+            const connectionKey = `${currentDragData.borderHostname}_${currentDragData.vlan}_${fusionRouterId}`;
+
+            // Check if already configured
+            if (connectionConfigs[connectionKey]) {
+                alert('This connection is already configured. Click on the connection line to edit it.');
+                return;
+            }
+
+            // Calculate fusion IP
+            const fusionIp = calculateFusionIP(currentDragData.ip);
+
+            // Prepare connection data for modal
+            currentConnection = {
+                key: connectionKey,
+                borderHostname: currentDragData.borderHostname,
+                borderVlan: currentDragData.vlan,
+                borderIp: currentDragData.ip,
+                borderVrf: currentDragData.vrf,
+                subnetMask: currentDragData.subnetMask,
+                fusionRouterId: fusionRouterId,
+                fusionHostname: fusionRouter.hostname,
+                fusionIp: fusionIp
+            };
+
+            // Open modal immediately
+            openConnectionModalFromData();
+        }
+
+        function updateGhostLine(event) {
+            if (!isDragging || !currentDragData) return;
+
+            const ghostLine = document.getElementById('dragGhostLine');
+            if (!ghostLine) return;
+
+            const svg = document.getElementById('topologySvg');
+            const pt = svg.createSVGPoint();
+            pt.x = event.clientX;
+            pt.y = event.clientY;
+
+            const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+            // Show ghost line from sidebar edge to mouse
+            ghostLine.setAttribute('x1', '0');
+            ghostLine.setAttribute('y1', svgP.y);
+            ghostLine.setAttribute('x2', svgP.x);
+            ghostLine.setAttribute('y2', svgP.y);
+            ghostLine.style.display = 'block';
+        }
+
+        // ============================================
+        // ZOOM AND PAN FUNCTIONALITY
+        // ============================================
+
+        function initializePanZoom() {
+            const container = document.getElementById('topologyContainer');
+            const svg = document.getElementById('topologySvg');
+
+            if (!svg) return;
+
+            // Mouse wheel zoom
+            svg.addEventListener('wheel', function(event) {
+                event.preventDefault();
+                const delta = event.deltaY > 0 ? -0.1 : 0.1;
+                const newZoom = Math.max(0.3, Math.min(3.0, zoomLevel + delta));
+                zoomLevel = newZoom;
+                updateZoomTransform();
+                updateZoomDisplay();
+            });
+
+            // Pan with mouse drag
+            svg.addEventListener('mousedown', function(event) {
+                if (event.target.tagName === 'svg' || event.target.id === 'mainGroup') {
+                    isPanning = true;
+                    lastPanX = event.clientX;
+                    lastPanY = event.clientY;
+                    container.classList.add('panning');
+                }
+            });
+
+            document.addEventListener('mousemove', function(event) {
+                if (!isPanning) return;
+
+                const dx = event.clientX - lastPanX;
+                const dy = event.clientY - lastPanY;
+
+                panX += dx;
+                panY += dy;
+
+                lastPanX = event.clientX;
+                lastPanY = event.clientY;
+
+                updateZoomTransform();
+            });
+
+            document.addEventListener('mouseup', function(event) {
+                if (isPanning) {
+                    isPanning = false;
+                    container.classList.remove('panning');
+                }
+            });
+        }
+
+        function updateZoomTransform() {
+            const mainGroup = document.getElementById('mainGroup');
+            if (!mainGroup) return;
+
+            mainGroup.setAttribute('transform', `translate(${panX}, ${panY}) scale(${zoomLevel})`);
+        }
+
+        function updateZoomDisplay() {
+            const zoomLevelEl = document.getElementById('zoomLevel');
+            if (zoomLevelEl) {
+                zoomLevelEl.textContent = `${Math.round(zoomLevel * 100)}%`;
+            }
+        }
+
+        function zoomIn() {
+            zoomLevel = Math.min(3.0, zoomLevel + 0.2);
+            updateZoomTransform();
+            updateZoomDisplay();
+        }
+
+        function zoomOut() {
+            zoomLevel = Math.max(0.3, zoomLevel - 0.2);
+            updateZoomTransform();
+            updateZoomDisplay();
+        }
+
+        function resetZoom() {
+            zoomLevel = 1.0;
+            panX = 0;
+            panY = 0;
+            updateZoomTransform();
+            updateZoomDisplay();
+        }
+
+        // ============================================
+        // CONNECTION MANAGEMENT
+        // ============================================
+
+        function editConnection(connectionKey) {
+            const config = connectionConfigs[connectionKey];
+            if (!config) return;
+
+            const fusionRouter = fusionRouters.find(r => r.router_id === config.fusion_router_id);
+            if (!fusionRouter) return;
+
+            currentConnection = {
+                key: connectionKey,
+                borderHostname: config.border_hostname,
+                borderVlan: config.border_vlan_id,
+                borderIp: config.border_ip,
+                borderVrf: config.vrf_name,
+                subnetMask: config.subnet_mask,
+                fusionRouterId: config.fusion_router_id,
+                fusionHostname: fusionRouter.hostname,
+                fusionIp: config.fusion_ip
+            };
+
+            openConnectionModalFromData();
+        }
+
+        function deleteConnection(connectionKey) {
+            if (!confirm('Are you sure you want to delete this connection?')) {
+                return;
+            }
+
+            delete connectionConfigs[connectionKey];
+            renderSidebarInterfaces();
+            renderTopologyDiagram();
+        }
+
+        function openConnectionModalFromData() {
+            if (!currentConnection) return;
+
+            // Build form
+            const formContainer = document.getElementById('connectionConfigForm');
+            const existingConfig = connectionConfigs[currentConnection.key];
+            const vrfStatus = currentConnection.borderVrf || 'Global Table';
+            const needsVrfInput = !currentConnection.borderVrf;
+
+            let html = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Border Node</h6>
+                        <p class="mb-1"><strong>Hostname:</strong> ${currentConnection.borderHostname}</p>
+                        <p class="mb-1"><strong>VLAN:</strong> ${currentConnection.borderVlan}</p>
+                        <p class="mb-1"><strong>IP Address:</strong> <span class="badge bg-info">${currentConnection.borderIp}</span></p>
+                        <p class="mb-1"><strong>VRF:</strong> <span class="badge ${currentConnection.borderVrf ? 'vrf-badge' : 'bg-secondary'}">${vrfStatus}</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success">Fusion Router</h6>
+                        <p class="mb-1"><strong>Hostname:</strong> ${currentConnection.fusionHostname}</p>
+                        <p class="mb-1"><strong>IP Address:</strong> <span class="badge bg-success">${currentConnection.fusionIp}</span></p>
+                        <p class="mb-1"><strong>Subnet Mask:</strong> ${currentConnection.subnetMask}</p>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <label class="form-label">VRF Name *</label>
+                        <input type="text" class="form-control" id="modal_vrf_name"
+                               placeholder="${needsVrfInput ? 'Required (e.g., INTERNET)' : currentConnection.borderVrf || 'INTERNET'}"
+                               value="${existingConfig ? existingConfig.vrf_name : currentConnection.borderVrf || ''}"
+                               required>
+                        <div class="form-text">VRF name for this connection</div>
+                    </div>
+            `;
+
+            if (currentInterfaceMode === 'routed') {
+                html += `
+                    <div class="col-12 mb-3">
+                        <label class="form-label">Fusion Interface *</label>
+                        <input type="text" class="form-control" id="modal_interface"
+                               placeholder="GigabitEthernet0/0/1"
+                               value="${existingConfig ? existingConfig.interface_name : ''}"
+                               required>
+                        <div class="form-text">Physical interface on fusion router</div>
+                    </div>
+                `;
+            } else if (currentInterfaceMode === 'svi') {
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">VLAN ID *</label>
+                        <input type="text" class="form-control" id="modal_vlan_id"
+                               placeholder="100"
+                               value="${existingConfig ? existingConfig.vlan_id : ''}"
+                               required>
+                        <div class="form-text">VLAN for SVI interface</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Physical Interface *</label>
+                        <input type="text" class="form-control" id="modal_physical_interface"
+                               placeholder="GigabitEthernet0/0/1"
+                               value="${existingConfig ? existingConfig.physical_interface : ''}"
+                               required>
+                        <div class="form-text">Physical trunk interface</div>
+                    </div>
+                `;
+            } else if (currentInterfaceMode === 'subinterface') {
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Parent Interface *</label>
+                        <input type="text" class="form-control" id="modal_parent_interface"
+                               placeholder="GigabitEthernet0/0/1"
+                               value="${existingConfig ? existingConfig.interface_name : ''}"
+                               required>
+                        <div class="form-text">Parent physical interface</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Subinterface ID *</label>
+                        <input type="text" class="form-control" id="modal_subif_id"
+                               placeholder="${currentConnection.borderVlan}"
+                               value="${existingConfig ? existingConfig.subif_id : currentConnection.borderVlan}"
+                               required>
+                        <div class="form-text">Subinterface number</div>
+                    </div>
+                `;
+            }
+
+            html += `
+                </div>
+            `;
+
+            formContainer.innerHTML = html;
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('connectionModal'));
+            modal.show();
+        }
+
+        function saveConnectionConfig() {
+            const vrfName = document.getElementById('modal_vrf_name').value.trim();
+
+            if (!vrfName) {
+                alert('VRF name is required');
+                return;
+            }
+
+            const config = {
+                border_hostname: currentConnection.borderHostname,
+                border_vlan_id: currentConnection.borderVlan,
+                fusion_router_id: currentConnection.fusionRouterId,
+                interface_mode: currentInterfaceMode,
+                vrf_name: vrfName,
+                border_ip: currentConnection.borderIp,
+                fusion_ip: currentConnection.fusionIp,
+                subnet_mask: currentConnection.subnetMask
+            };
+
+            if (currentInterfaceMode === 'routed') {
+                config.interface_name = document.getElementById('modal_interface').value.trim();
+                if (!config.interface_name) {
+                    alert('Interface name is required');
+                    return;
+                }
+            } else if (currentInterfaceMode === 'svi') {
+                config.vlan_id = document.getElementById('modal_vlan_id').value.trim();
+                config.physical_interface = document.getElementById('modal_physical_interface').value.trim();
+                if (!config.vlan_id || !config.physical_interface) {
+                    alert('VLAN ID and Physical Interface are required');
+                    return;
+                }
+            } else if (currentInterfaceMode === 'subinterface') {
+                config.interface_name = document.getElementById('modal_parent_interface').value.trim();
+                config.subif_id = document.getElementById('modal_subif_id').value.trim();
+                if (!config.interface_name || !config.subif_id) {
+                    alert('Parent interface and Subinterface ID are required');
+                    return;
+                }
+            }
+
+            // Save configuration
+            connectionConfigs[currentConnection.key] = config;
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('connectionModal'));
+            modal.hide();
+
+            // Re-render sidebar and diagram to update visual state
+            renderSidebarInterfaces();
+            renderTopologyDiagram();
         }
 
         function calculateFusionIP(borderNodeIP) {
@@ -617,63 +1803,17 @@
         }
 
         function proceedToStep5() {
-            const interfaceMode = getSelectedInterfaceMode();
+            // Collect handoff configurations from connectionConfigs
             handoffs = [];
 
-            // Collect handoff configurations
-            const checkboxes = document.querySelectorAll('.handoff-checkbox:checked');
-            let rowIndex = 0;
-
-            checkboxes.forEach((checkbox, index) => {
-                const actualIndex = parseInt(checkbox.id.split('_')[1]);
-
-                const fusionRouterId = parseInt(document.getElementById(`fr_${actualIndex}`).value);
-                const vrfName = document.getElementById(`vrf_${actualIndex}`).value.trim();
-
-                if (!vrfName) {
-                    alert(`VRF name is required for row ${actualIndex + 1}`);
-                    throw new Error('VRF validation failed');
-                }
-
-                const handoff = {
-                    border_hostname: checkbox.dataset.borderHostname,
-                    border_vlan_id: checkbox.dataset.borderVlan,
-                    fusion_router_id: fusionRouterId,
-                    interface_mode: interfaceMode,
-                    vrf_name: vrfName,
-                    border_ip: checkbox.dataset.borderIp,
-                    fusion_ip: checkbox.dataset.fusionIp,
-                    subnet_mask: checkbox.dataset.subnetMask
-                };
-
-                if (interfaceMode === 'routed') {
-                    handoff.interface_name = document.getElementById(`if_${actualIndex}`).value.trim();
-                    if (!handoff.interface_name) {
-                        alert(`Interface name is required for row ${actualIndex + 1}`);
-                        throw new Error('Interface validation failed');
-                    }
-                } else if (interfaceMode === 'svi') {
-                    handoff.vlan_id = document.getElementById(`vlan_${actualIndex}`).value.trim();
-                    handoff.physical_interface = document.getElementById(`phys_${actualIndex}`).value.trim();
-                    if (!handoff.vlan_id || !handoff.physical_interface) {
-                        alert(`VLAN ID and Physical Interface are required for row ${actualIndex + 1}`);
-                        throw new Error('SVI validation failed');
-                    }
-                } else if (interfaceMode === 'subinterface') {
-                    handoff.interface_name = document.getElementById(`parent_${actualIndex}`).value.trim();
-                    handoff.subif_id = document.getElementById(`subif_${actualIndex}`).value.trim();
-                    if (!handoff.interface_name || !handoff.subif_id) {
-                        alert(`Parent interface and Subinterface ID are required for row ${actualIndex + 1}`);
-                        throw new Error('Subinterface validation failed');
-                    }
-                }
-
-                handoffs.push(handoff);
-            });
-
-            if (handoffs.length === 0) {
-                alert('Please select at least one handoff');
+            if (Object.keys(connectionConfigs).length === 0) {
+                alert('Please configure at least one connection by dragging an interface to a fusion router.');
                 return;
+            }
+
+            // Convert connectionConfigs to handoffs array
+            for (const connectionKey in connectionConfigs) {
+                handoffs.push(connectionConfigs[connectionKey]);
             }
 
             // Extract unique VRF names
@@ -774,12 +1914,25 @@
                     vrfConfigs.push(vrf);
                 });
 
+                // Collect iBGP parameters
+                let ibgpParams = null;
+                if (document.getElementById('enableIbgp')?.checked) {
+                    ibgpParams = {
+                        enabled: true,
+                        bfd_enabled: document.getElementById('ibgpBfdEnabled').checked,
+                        bfd_interval: 250,
+                        bfd_min_rx: 250,
+                        bfd_multiplier: 3
+                    };
+                }
+
                 // Prepare request data
                 const requestData = {
                     fusion_routers: fusionRouters,
                     border_nodes: borderNodeConfigs,
                     handoffs: handoffs,
-                    vrf_configs: vrfConfigs
+                    vrf_configs: vrfConfigs,
+                    ibgp_params: ibgpParams
                 };
 
                 const response = await fetch('/generate', {
@@ -797,7 +1950,7 @@
                 }
 
                 generatedConfigs = data.configs;
-                displayConfigPreviews(generatedConfigs);
+                displayConfigPreviews(generatedConfigs, data.saved_files, data.summary_file);
                 showStep(6);
 
             } catch (error) {
@@ -805,7 +1958,7 @@
             }
         }
 
-        function displayConfigPreviews(configs) {
+        function displayConfigPreviews(configs, savedFiles, summaryFile) {
             const tabsContainer = document.getElementById('configTabs');
             const contentContainer = document.getElementById('configTabContent');
 
@@ -844,6 +1997,22 @@
 
             tabsContainer.innerHTML = tabsHtml;
             contentContainer.innerHTML = contentHtml;
+
+            // Add notification for saved files
+            if (savedFiles && savedFiles.length > 0) {
+                let savedMsg = '<div class="alert alert-info mt-3">' +
+                               '<h6><i class="fas fa-save"></i> Configurations automatically saved to outputs/</h6>' +
+                               '<ul class="mb-0">';
+                savedFiles.forEach(file => {
+                    savedMsg += `<li><code>${file.filename}</code></li>`;
+                });
+                if (summaryFile) {
+                    savedMsg += `<li><code>${summaryFile}</code> (generation summary)</li>`;
+                }
+                savedMsg += '</ul></div>';
+
+                contentContainer.insertAdjacentHTML('beforeend', savedMsg);
+            }
         }
 
         function escapeHtml(text) {

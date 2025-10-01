@@ -359,6 +359,83 @@ Before deploying generated configurations:
 - Confirm: BGP AS numbers are correct
 - Validate: BFD is configured on both ends
 
+## Output Files
+
+Generated configurations are automatically saved to the `outputs/` directory with timestamped filenames.
+
+### File Naming Convention
+
+- **Config files**: `{hostname}-config-{timestamp}.txt`
+- **Summary files**: `generation-summary-{timestamp}.json`
+
+### Example
+
+```
+outputs/
+├── fr-bxl-01-config-20251001-143052.txt
+├── fr-bxl-02-config-20251001-143052.txt
+└── generation-summary-20251001-143052.json
+```
+
+### Automatic Saving
+
+When you generate configurations through the web interface:
+1. Each fusion router config is automatically saved to `outputs/`
+2. A generation summary JSON file is created with metadata
+3. The UI displays which files were saved
+4. Files are timestamped to prevent overwrites
+
+### Generation Summary Format
+
+The JSON summary file contains:
+```json
+{
+  "timestamp": "2025-10-01T14:30:52",
+  "border_nodes": ["stk-bxl-bn-institut", "stk-bxl-bn-villa"],
+  "fusion_routers": [
+    {
+      "hostname": "fr-bxl-01",
+      "config_file": "fr-bxl-01-config-20251001-143052.txt",
+      "interface_mode": "svi",
+      "handoff_count": 4,
+      "vrfs": ["INTERNET", "Campus_VN"]
+    }
+  ],
+  "interface_mode": "svi",
+  "total_handoffs": 8
+}
+```
+
+### Managing Output Files
+
+**List saved configs**:
+```bash
+curl http://localhost:5001/outputs
+```
+
+**Download saved config**:
+```bash
+curl http://localhost:5001/outputs/fr-bxl-01-config-20251001-143052.txt -O
+```
+
+**Delete saved config**:
+```bash
+curl -X DELETE http://localhost:5001/outputs/fr-bxl-01-config-20251001-143052.txt
+```
+
+### Cleanup
+
+To clean up old output files:
+
+```bash
+# Remove all output files
+rm outputs/*.txt outputs/*.json
+
+# Remove outputs older than 30 days
+find outputs -name "*.txt" -mtime +30 -delete
+find outputs -name "*.json" -mtime +30 -delete
+```
+
 ## API Reference
 
 ### Upload Endpoint
@@ -426,7 +503,49 @@ Response:
   "configs": {
     "fusion-01": "! Configuration content...",
     "fusion-02": "! Configuration content..."
-  }
+  },
+  "saved_files": [
+    {
+      "hostname": "fusion-01",
+      "filepath": "/path/to/outputs/fusion-01-config-20251001-143052.txt",
+      "filename": "fusion-01-config-20251001-143052.txt"
+    }
+  ],
+  "summary_file": "generation-summary-20251001-143052.json"
+}
+```
+
+### List Outputs Endpoint
+```
+GET /outputs
+
+Response:
+{
+  "files": [
+    {
+      "filename": "fr-bxl-01-config-20251001-143052.txt",
+      "size": 4523,
+      "modified": "2025-10-01T14:30:52"
+    }
+  ]
+}
+```
+
+### Download Saved Config Endpoint
+```
+GET /outputs/<filename>
+
+Response: File download
+```
+
+### Delete Saved Config Endpoint
+```
+DELETE /outputs/<filename>
+
+Response:
+{
+  "success": true,
+  "message": "Deleted fr-bxl-01-config-20251001-143052.txt"
 }
 ```
 
@@ -480,6 +599,10 @@ fusion-router-conf-gen/
 ├── templates/
 │   ├── index.html                  # Frontend UI
 │   └── fusion_router_config.j2     # Cisco config template
+├── outputs/                        # Auto-generated configs (gitignored)
+│   ├── .gitkeep                    # Keep directory in git
+│   ├── *-config-*.txt              # Generated router configs
+│   └── generation-summary-*.json   # Generation metadata
 ├── bn-institut.txt                 # Sample border node config
 ├── bn-villa.txt                    # Sample border node config
 └── README.md                       # This file
@@ -537,7 +660,22 @@ For issues, questions, or feature requests:
 
 ## Version History
 
-### Version 2.0 (Current - 2025-10-01)
+### Version 2.1 (Current - 2025-10-01)
+- **Automatic file generation to outputs/ directory**
+- **Timestamped filenames to prevent overwrites**
+- **Generation summary JSON with metadata**
+- **API endpoints for listing/downloading/deleting saved configs**
+- UI notifications showing saved files
+- Multi-fusion router support (up to 2 routers)
+- Interface mode selection (Routed/SVI/Subinterface)
+- Advanced VRF configuration (RD/RT control)
+- Global table → VRF mapping
+- Physical interface extraction
+- Enhanced validation
+- Tabbed configuration preview
+- 6-step wizard workflow
+
+### Version 2.0
 - Multi-fusion router support (up to 2 routers)
 - Interface mode selection (Routed/SVI/Subinterface)
 - Advanced VRF configuration (RD/RT control)

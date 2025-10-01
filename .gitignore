@@ -31,8 +31,13 @@ Thumbs.db
 /tmp/
 uploads/
 
-# Generated configs
+# Generated configs (legacy pattern)
 *-config.txt
+
+# Output configurations (new outputs directory)
+outputs/*.txt
+outputs/*.json
+!outputs/.gitkeep
 
 # Test files
 test_*.py
