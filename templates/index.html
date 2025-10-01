@@ -24,12 +24,14 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
         .step {
             flex: 1;
             text-align: center;
             padding: 1rem;
             position: relative;
+            min-width: 120px;
         }
         .step::before {
             content: '';
@@ -96,13 +98,29 @@
         #loading {
             display: none;
         }
+        .handoff-table {
+            font-size: 0.9rem;
+        }
+        .handoff-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .vrf-config-section {
+            background-color: #f8f9fa;
+            border-radius: 0.25rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .router-config-tab {
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
     <div class="header-section">
         <div class="container">
             <h1><i class="fas fa-network-wired"></i> Cisco Fusion Router Config Generator</h1>
-            <p class="lead mb-0">Generate BGP/BFD configurations for fusion routers peering with SDA fabric border nodes</p>
+            <p class="lead mb-0">Enhanced configuration generator with multi-router, VRF, and interface mode support</p>
         </div>
     </div>
 
@@ -115,14 +133,22 @@
             </div>
             <div class="step" id="step2-indicator">
                 <div class="step-number">2</div>
-                <div>Configure Router</div>
+                <div>Fusion Router Setup</div>
             </div>
             <div class="step" id="step3-indicator">
                 <div class="step-number">3</div>
-                <div>Select Interfaces</div>
+                <div>Interface Mode</div>
             </div>
             <div class="step" id="step4-indicator">
                 <div class="step-number">4</div>
+                <div>Handoff Mapping</div>
+            </div>
+            <div class="step" id="step5-indicator">
+                <div class="step-number">5</div>
+                <div>VRF Configuration</div>
+            </div>
+            <div class="step" id="step6-indicator">
+                <div class="step-number">6</div>
                 <div>Generate & Download</div>
             </div>
         </div>
@@ -152,49 +178,123 @@
             </div>
         </div>
 
-        <!-- Step 2: Configure Fusion Router Parameters -->
+        <!-- Step 2: Fusion Router Setup -->
         <div id="step2" class="step-content" style="display: none;">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-cog"></i> Step 2: Configure Fusion Router Parameters</h5>
+                    <h5 class="mb-0"><i class="fas fa-server"></i> Step 2: Fusion Router Setup</h5>
                 </div>
                 <div class="card-body">
                     <div id="borderNodeSummary" class="mb-4"></div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="fusionHostname" class="form-label">Fusion Router Hostname *</label>
-                            <input type="text" class="form-control" id="fusionHostname" placeholder="fusion-router-01" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="fusionRouterId" class="form-label">BGP Router ID *</label>
-                            <input type="text" class="form-control" id="fusionRouterId" placeholder="10.0.0.1" required>
-                            <div class="form-text">Typically a loopback IP address</div>
-                        </div>
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Number of Fusion Routers *</strong></label>
+                        <select class="form-select" id="numFusionRouters" onchange="updateFusionRouterInputs()">
+                            <option value="1" selected>Single Fusion Router</option>
+                            <option value="2">Dual Fusion Routers (Redundant Pair)</option>
+                        </select>
+                        <div class="form-text">Select 2 for redundant fusion router pairs</div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="fusionAsNumber" class="form-label">BGP AS Number *</label>
-                            <input type="number" class="form-control" id="fusionAsNumber" placeholder="64701" required>
-                        </div>
-                    </div>
+
+                    <div id="fusionRouterConfigs"></div>
+
                     <button class="btn btn-primary" onclick="proceedToStep3()">
-                        <i class="fas fa-arrow-right"></i> Next: Select Interfaces
+                        <i class="fas fa-arrow-right"></i> Next: Select Interface Mode
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Step 3: Select Interfaces -->
+        <!-- Step 3: Interface Mode Selection -->
         <div id="step3" class="step-content" style="display: none;">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-network-wired"></i> Step 3: Select Interfaces for Peering</h5>
+                    <h5 class="mb-0"><i class="fas fa-ethernet"></i> Step 3: Interface Mode Selection</h5>
                 </div>
                 <div class="card-body">
-                    <p>Select which VLAN interfaces should be configured for BGP peering</p>
-                    <div id="interfaceSelection"></div>
+                    <p>Select how interfaces should be configured on the fusion router(s)</p>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="interfaceMode" id="modeRouted" value="routed" checked>
+                                        <label class="form-check-label w-100" for="modeRouted">
+                                            <h6>Routed Interfaces</h6>
+                                            <small class="text-muted">Direct L3 configuration on physical interfaces</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="interfaceMode" id="modeSVI" value="svi">
+                                        <label class="form-check-label w-100" for="modeSVI">
+                                            <h6>SVI Mode</h6>
+                                            <small class="text-muted">L3 on VLAN interfaces, L2 trunk on physical ports</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="interfaceMode" id="modeSubinterface" value="subinterface">
+                                        <label class="form-check-label w-100" for="modeSubinterface">
+                                            <h6>Subinterface Mode</h6>
+                                            <small class="text-muted">802.1Q subinterfaces for WAN handoffs</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <button class="btn btn-secondary me-2" onclick="showStep(2)">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="btn btn-primary" onclick="proceedToStep4()">
+                        <i class="fas fa-arrow-right"></i> Next: Configure Handoffs
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Handoff Mapping -->
+        <div id="step4" class="step-content" style="display: none;">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-network-wired"></i> Step 4: Handoff Mapping Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <p>Map border node VLAN interfaces to fusion router interfaces</p>
+                    <div id="handoffMappingTable"></div>
+                    <button class="btn btn-secondary me-2" onclick="showStep(3)">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="btn btn-primary" onclick="proceedToStep5()">
+                        <i class="fas fa-arrow-right"></i> Next: Configure VRFs
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: VRF Configuration -->
+        <div id="step5" class="step-content" style="display: none;">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Step 5: VRF Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <p>Configure VRF parameters including Route Distinguisher and Route Targets</p>
+                    <div id="vrfConfigSection"></div>
+                    <button class="btn btn-secondary me-2" onclick="showStep(4)">
                         <i class="fas fa-arrow-left"></i> Back
                     </button>
                     <button class="btn btn-primary" onclick="generateConfiguration()">
@@ -204,26 +304,26 @@
             </div>
         </div>
 
-        <!-- Step 4: Preview and Download -->
-        <div id="step4" class="step-content" style="display: none;">
+        <!-- Step 6: Preview and Download -->
+        <div id="step6" class="step-content" style="display: none;">
             <div class="card">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-file-code"></i> Step 4: Preview and Download Configuration</h5>
-                    <button class="btn btn-success btn-sm" onclick="downloadConfig()">
-                        <i class="fas fa-download"></i> Download Configuration
-                    </button>
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-code"></i> Step 6: Preview and Download Configuration</h5>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-success" role="alert">
-                        <i class="fas fa-check-circle"></i> Configuration generated successfully!
+                        <i class="fas fa-check-circle"></i> Configuration(s) generated successfully!
                     </div>
-                    <div id="configPreview" class="config-preview"></div>
+
+                    <ul class="nav nav-tabs" id="configTabs" role="tablist"></ul>
+                    <div class="tab-content router-config-tab" id="configTabContent"></div>
+
                     <div class="mt-3">
-                        <button class="btn btn-secondary me-2" onclick="showStep(3)">
-                            <i class="fas fa-arrow-left"></i> Back to Interface Selection
+                        <button class="btn btn-secondary me-2" onclick="showStep(5)">
+                            <i class="fas fa-arrow-left"></i> Back to VRF Configuration
                         </button>
-                        <button class="btn btn-success" onclick="downloadConfig()">
-                            <i class="fas fa-download"></i> Download Configuration
+                        <button class="btn btn-success" onclick="downloadAllConfigs()">
+                            <i class="fas fa-download"></i> Download All Configurations
                         </button>
                     </div>
                 </div>
@@ -234,7 +334,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let borderNodeConfigs = [];
-        let generatedConfig = '';
+        let generatedConfigs = {};
+        let fusionRouters = [];
+        let handoffs = [];
 
         function showStep(stepNumber) {
             // Hide all steps
@@ -284,6 +386,7 @@
 
                 borderNodeConfigs = data.configs;
                 displayBorderNodeSummary();
+                updateFusionRouterInputs();
                 showStep(2);
 
             } catch (error) {
@@ -306,7 +409,7 @@
                                 <h6 class="card-title"><i class="fas fa-server"></i> ${config.hostname}</h6>
                                 <p class="card-text mb-1"><strong>Loopback0:</strong> ${config.loopback0_ip}</p>
                                 <p class="card-text mb-1"><strong>BGP AS:</strong> ${config.bgp.as_number}</p>
-                                <p class="card-text mb-0"><strong>VLAN Interfaces:</strong> ${config.vlan_interfaces.length} (/30 subnets with BFD)</p>
+                                <p class="card-text mb-0"><strong>VLAN Interfaces:</strong> ${config.vlan_interfaces.length} (/30 subnets)</p>
                             </div>
                         </div>
                     </div>
@@ -317,88 +420,193 @@
             summary.innerHTML = html;
         }
 
-        function proceedToStep3() {
-            // Validate inputs
-            const hostname = document.getElementById('fusionHostname').value.trim();
-            const routerId = document.getElementById('fusionRouterId').value.trim();
-            const asNumber = document.getElementById('fusionAsNumber').value.trim();
-
-            if (!hostname || !routerId || !asNumber) {
-                alert('Please fill in all required fields');
-                return;
-            }
-
-            // Validate IP address format
-            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-            if (!ipRegex.test(routerId)) {
-                alert('Please enter a valid IP address for Router ID');
-                return;
-            }
-
-            displayInterfaceSelection();
-            showStep(3);
-        }
-
-        function displayInterfaceSelection() {
-            const container = document.getElementById('interfaceSelection');
+        function updateFusionRouterInputs() {
+            const numRouters = parseInt(document.getElementById('numFusionRouters').value);
+            const container = document.getElementById('fusionRouterConfigs');
             let html = '';
 
-            borderNodeConfigs.forEach(config => {
+            for (let i = 1; i <= numRouters; i++) {
                 html += `
-                    <div class="card interface-card mb-3">
+                    <div class="card mb-3">
                         <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-server"></i> ${config.hostname}</h6>
+                            <h6 class="mb-0">Fusion Router ${i} Configuration</h6>
                         </div>
                         <div class="card-body">
-                `;
-
-                if (config.vlan_interfaces.length === 0) {
-                    html += '<p class="text-muted">No /30 VLAN interfaces with BFD found</p>';
-                } else {
-                    config.vlan_interfaces.forEach(vlan => {
-                        const fusionIp = calculateFusionIP(vlan.ip_address);
-                        const vrfBadge = vlan.vrf ? `<span class="badge vrf-badge">VRF: ${vlan.vrf}</span>` : '';
-
-                        html += `
-                            <div class="form-check mb-3 p-3 border rounded">
-                                <input class="form-check-input" type="checkbox"
-                                       id="vlan_${config.hostname}_${vlan.vlan}"
-                                       data-hostname="${config.hostname}"
-                                       data-vlan="${vlan.vlan}"
-                                       checked>
-                                <label class="form-check-label w-100" for="vlan_${config.hostname}_${vlan.vlan}">
-                                    <strong>VLAN ${vlan.vlan}</strong> ${vrfBadge}
-                                    <br>
-                                    <small class="text-muted">${vlan.description || 'External router connection'}</small>
-                                    <br>
-                                    <span class="badge bg-info">Border Node: ${vlan.ip_address}</span>
-                                    <span class="badge bg-success">Fusion Router: ${fusionIp}</span>
-                                    <span class="badge bg-warning text-dark">BFD: ${vlan.bfd_interval}ms</span>
-                                </label>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="fusionHostname${i}" class="form-label">Hostname *</label>
+                                    <input type="text" class="form-control" id="fusionHostname${i}"
+                                           placeholder="fusion-router-0${i}" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="fusionRouterId${i}" class="form-label">BGP Router ID *</label>
+                                    <input type="text" class="form-control" id="fusionRouterId${i}"
+                                           placeholder="10.0.0.${i}" required>
+                                    <div class="form-text">Typically a loopback IP</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="fusionAsNumber${i}" class="form-label">BGP AS Number *</label>
+                                    <input type="number" class="form-control" id="fusionAsNumber${i}"
+                                           placeholder="6470${i}" required>
+                                </div>
                             </div>
-                        `;
-                    });
-                }
-
-                html += `
                         </div>
                     </div>
                 `;
-            });
+            }
 
             container.innerHTML = html;
         }
 
+        function proceedToStep3() {
+            const numRouters = parseInt(document.getElementById('numFusionRouters').value);
+            fusionRouters = [];
+
+            // Validate and collect fusion router configs
+            for (let i = 1; i <= numRouters; i++) {
+                const hostname = document.getElementById(`fusionHostname${i}`).value.trim();
+                const routerId = document.getElementById(`fusionRouterId${i}`).value.trim();
+                const asNumber = document.getElementById(`fusionAsNumber${i}`).value.trim();
+
+                if (!hostname || !routerId || !asNumber) {
+                    alert(`Please fill in all required fields for Fusion Router ${i}`);
+                    return;
+                }
+
+                // Validate IP address format
+                const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+                if (!ipRegex.test(routerId)) {
+                    alert(`Please enter a valid IP address for Fusion Router ${i} BGP Router ID`);
+                    return;
+                }
+
+                fusionRouters.push({
+                    router_id: i,
+                    hostname: hostname,
+                    bgp_router_id: routerId,
+                    as_number: asNumber
+                });
+            }
+
+            showStep(3);
+        }
+
+        function getSelectedInterfaceMode() {
+            const modes = document.getElementsByName('interfaceMode');
+            for (let mode of modes) {
+                if (mode.checked) {
+                    return mode.value;
+                }
+            }
+            return 'routed';
+        }
+
+        function proceedToStep4() {
+            const interfaceMode = getSelectedInterfaceMode();
+            displayHandoffMappingTable(interfaceMode);
+            showStep(4);
+        }
+
+        function displayHandoffMappingTable(interfaceMode) {
+            const container = document.getElementById('handoffMappingTable');
+            let html = '<div class="table-responsive"><table class="table table-striped handoff-table">';
+
+            // Build table header based on mode
+            html += '<thead><tr>';
+            html += '<th>Enable</th>';
+            html += '<th>Border Node</th>';
+            html += '<th>Border VLAN</th>';
+            html += '<th>Border VRF Status</th>';
+            html += '<th>Fusion Router</th>';
+            html += '<th>Fusion VRF Name *</th>';
+
+            if (interfaceMode === 'routed') {
+                html += '<th>Fusion Interface *</th>';
+            } else if (interfaceMode === 'svi') {
+                html += '<th>Fusion VLAN ID *</th>';
+                html += '<th>Physical Interface *</th>';
+            } else if (interfaceMode === 'subinterface') {
+                html += '<th>Parent Interface *</th>';
+                html += '<th>Subinterface ID *</th>';
+            }
+
+            html += '<th>Border IP</th>';
+            html += '<th>Fusion IP</th>';
+            html += '</tr></thead><tbody>';
+
+            // Build table rows
+            let rowIndex = 0;
+            borderNodeConfigs.forEach(config => {
+                config.vlan_interfaces.forEach(vlan => {
+                    const fusionIp = calculateFusionIP(vlan.ip_address);
+                    const vrfStatus = vlan.vrf || 'Global Table';
+                    const needsVrfInput = !vlan.vrf;
+
+                    html += `<tr>`;
+                    html += `<td><input type="checkbox" class="form-check-input handoff-checkbox"
+                                      id="handoff_${rowIndex}" checked
+                                      data-border-hostname="${config.hostname}"
+                                      data-border-vlan="${vlan.vlan}"
+                                      data-border-ip="${vlan.ip_address}"
+                                      data-fusion-ip="${fusionIp}"
+                                      data-border-vrf="${vlan.vrf || ''}"
+                                      data-subnet-mask="${vlan.subnet_mask}"></td>`;
+                    html += `<td>${config.hostname}</td>`;
+                    html += `<td>VLAN ${vlan.vlan}</td>`;
+                    html += `<td><span class="badge ${vlan.vrf ? 'vrf-badge' : 'bg-secondary'}">${vrfStatus}</span></td>`;
+
+                    // Fusion router selector
+                    html += `<td><select class="form-select form-select-sm" id="fr_${rowIndex}">`;
+                    fusionRouters.forEach(fr => {
+                        html += `<option value="${fr.router_id}">${fr.hostname}</option>`;
+                    });
+                    html += `</select></td>`;
+
+                    // Fusion VRF Name
+                    html += `<td><input type="text" class="form-control form-control-sm"
+                                       id="vrf_${rowIndex}"
+                                       placeholder="${needsVrfInput ? 'Required (e.g., INTERNET)' : vlan.vrf || 'INTERNET'}"
+                                       value="${vlan.vrf || ''}"
+                                       ${needsVrfInput ? 'required' : ''}></td>`;
+
+                    // Interface-specific fields
+                    if (interfaceMode === 'routed') {
+                        html += `<td><input type="text" class="form-control form-control-sm"
+                                           id="if_${rowIndex}"
+                                           placeholder="GigabitEthernet0/0/1" required></td>`;
+                    } else if (interfaceMode === 'svi') {
+                        html += `<td><input type="text" class="form-control form-control-sm"
+                                           id="vlan_${rowIndex}"
+                                           placeholder="100" required></td>`;
+                        html += `<td><input type="text" class="form-control form-control-sm"
+                                           id="phys_${rowIndex}"
+                                           placeholder="GigabitEthernet0/0/1" required></td>`;
+                    } else if (interfaceMode === 'subinterface') {
+                        html += `<td><input type="text" class="form-control form-control-sm"
+                                           id="parent_${rowIndex}"
+                                           placeholder="GigabitEthernet0/0/1" required></td>`;
+                        html += `<td><input type="text" class="form-control form-control-sm"
+                                           id="subif_${rowIndex}"
+                                           value="${vlan.vlan}"></td>`;
+                    }
+
+                    html += `<td><span class="badge bg-info">${vlan.ip_address}</span></td>`;
+                    html += `<td><span class="badge bg-success">${fusionIp}</span></td>`;
+                    html += `</tr>`;
+
+                    rowIndex++;
+                });
+            });
+
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
         function calculateFusionIP(borderNodeIP) {
-            // Simple JavaScript calculation for fusion router IP
-            // In a /30 subnet, if border node is X.X.X.1, fusion is X.X.X.2 (and vice versa)
             const parts = borderNodeIP.split('.').map(Number);
             const lastOctet = parts[3];
-
-            // Find the network base (multiple of 4)
             const networkBase = Math.floor(lastOctet / 4) * 4;
 
-            // First usable is networkBase + 1, second is networkBase + 2
             if (lastOctet === networkBase + 1) {
                 parts[3] = networkBase + 2;
             } else if (lastOctet === networkBase + 2) {
@@ -408,35 +616,172 @@
             return parts.join('.');
         }
 
-        async function generateConfiguration() {
-            // Gather selected interfaces
-            const selectedInterfaces = {};
+        function proceedToStep5() {
+            const interfaceMode = getSelectedInterfaceMode();
+            handoffs = [];
 
-            document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-                const hostname = checkbox.dataset.hostname;
-                const vlan = checkbox.dataset.vlan;
+            // Collect handoff configurations
+            const checkboxes = document.querySelectorAll('.handoff-checkbox:checked');
+            let rowIndex = 0;
 
-                if (!selectedInterfaces[hostname]) {
-                    selectedInterfaces[hostname] = [];
+            checkboxes.forEach((checkbox, index) => {
+                const actualIndex = parseInt(checkbox.id.split('_')[1]);
+
+                const fusionRouterId = parseInt(document.getElementById(`fr_${actualIndex}`).value);
+                const vrfName = document.getElementById(`vrf_${actualIndex}`).value.trim();
+
+                if (!vrfName) {
+                    alert(`VRF name is required for row ${actualIndex + 1}`);
+                    throw new Error('VRF validation failed');
                 }
-                selectedInterfaces[hostname].push(vlan);
+
+                const handoff = {
+                    border_hostname: checkbox.dataset.borderHostname,
+                    border_vlan_id: checkbox.dataset.borderVlan,
+                    fusion_router_id: fusionRouterId,
+                    interface_mode: interfaceMode,
+                    vrf_name: vrfName,
+                    border_ip: checkbox.dataset.borderIp,
+                    fusion_ip: checkbox.dataset.fusionIp,
+                    subnet_mask: checkbox.dataset.subnetMask
+                };
+
+                if (interfaceMode === 'routed') {
+                    handoff.interface_name = document.getElementById(`if_${actualIndex}`).value.trim();
+                    if (!handoff.interface_name) {
+                        alert(`Interface name is required for row ${actualIndex + 1}`);
+                        throw new Error('Interface validation failed');
+                    }
+                } else if (interfaceMode === 'svi') {
+                    handoff.vlan_id = document.getElementById(`vlan_${actualIndex}`).value.trim();
+                    handoff.physical_interface = document.getElementById(`phys_${actualIndex}`).value.trim();
+                    if (!handoff.vlan_id || !handoff.physical_interface) {
+                        alert(`VLAN ID and Physical Interface are required for row ${actualIndex + 1}`);
+                        throw new Error('SVI validation failed');
+                    }
+                } else if (interfaceMode === 'subinterface') {
+                    handoff.interface_name = document.getElementById(`parent_${actualIndex}`).value.trim();
+                    handoff.subif_id = document.getElementById(`subif_${actualIndex}`).value.trim();
+                    if (!handoff.interface_name || !handoff.subif_id) {
+                        alert(`Parent interface and Subinterface ID are required for row ${actualIndex + 1}`);
+                        throw new Error('Subinterface validation failed');
+                    }
+                }
+
+                handoffs.push(handoff);
             });
 
-            if (Object.keys(selectedInterfaces).length === 0) {
-                alert('Please select at least one interface');
+            if (handoffs.length === 0) {
+                alert('Please select at least one handoff');
                 return;
             }
 
-            // Prepare request data
-            const requestData = {
-                fusion_hostname: document.getElementById('fusionHostname').value.trim(),
-                fusion_router_id: document.getElementById('fusionRouterId').value.trim(),
-                fusion_as_number: document.getElementById('fusionAsNumber').value.trim(),
-                border_nodes: borderNodeConfigs,
-                selected_interfaces: selectedInterfaces
-            };
+            // Extract unique VRF names
+            displayVrfConfiguration();
+            showStep(5);
+        }
 
+        function displayVrfConfiguration() {
+            const uniqueVrfs = [...new Set(handoffs.map(h => h.vrf_name))];
+            const container = document.getElementById('vrfConfigSection');
+            let html = '';
+
+            uniqueVrfs.forEach((vrfName, index) => {
+                html += `
+                    <div class="vrf-config-section">
+                        <h6><i class="fas fa-project-diagram"></i> VRF: ${vrfName}</h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="vrf_rd_${index}" class="form-label">Route Distinguisher (RD) *</label>
+                                <input type="text" class="form-control" id="vrf_rd_${index}"
+                                       placeholder="65000:${100 + index}" required
+                                       data-vrf-name="${vrfName}">
+                                <div class="form-text">Format: ASN:NN or IP:NN</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Route Target Export</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="vrf_rt_exp_enable_${index}"
+                                           onchange="toggleRtField('exp', ${index})">
+                                    <label class="form-check-label" for="vrf_rt_exp_enable_${index}">
+                                        Enable RT Export
+                                    </label>
+                                </div>
+                                <input type="text" class="form-control mt-2" id="vrf_rt_exp_${index}"
+                                       placeholder="65000:${100 + index}" disabled>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Route Target Import</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="vrf_rt_imp_enable_${index}"
+                                           onchange="toggleRtField('imp', ${index})">
+                                    <label class="form-check-label" for="vrf_rt_imp_enable_${index}">
+                                        Enable RT Import
+                                    </label>
+                                </div>
+                                <input type="text" class="form-control mt-2" id="vrf_rt_imp_${index}"
+                                       placeholder="65000:${200 + index}" disabled>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function toggleRtField(type, index) {
+            const checkbox = document.getElementById(`vrf_rt_${type}_enable_${index}`);
+            const input = document.getElementById(`vrf_rt_${type}_${index}`);
+            input.disabled = !checkbox.checked;
+        }
+
+        async function generateConfiguration() {
             try {
+                // Collect VRF configurations
+                const uniqueVrfs = [...new Set(handoffs.map(h => h.vrf_name))];
+                const vrfConfigs = [];
+
+                uniqueVrfs.forEach((vrfName, index) => {
+                    const rd = document.getElementById(`vrf_rd_${index}`).value.trim();
+                    if (!rd) {
+                        throw new Error(`Route Distinguisher is required for VRF ${vrfName}`);
+                    }
+
+                    const vrf = {
+                        name: vrfName,
+                        rd: rd,
+                        rt_export_enabled: document.getElementById(`vrf_rt_exp_enable_${index}`).checked,
+                        rt_import_enabled: document.getElementById(`vrf_rt_imp_enable_${index}`).checked
+                    };
+
+                    if (vrf.rt_export_enabled) {
+                        vrf.rt_export_value = document.getElementById(`vrf_rt_exp_${index}`).value.trim();
+                        if (!vrf.rt_export_value) {
+                            throw new Error(`RT Export value is required for VRF ${vrfName}`);
+                        }
+                    }
+
+                    if (vrf.rt_import_enabled) {
+                        vrf.rt_import_value = document.getElementById(`vrf_rt_imp_${index}`).value.trim();
+                        if (!vrf.rt_import_value) {
+                            throw new Error(`RT Import value is required for VRF ${vrfName}`);
+                        }
+                    }
+
+                    vrfConfigs.push(vrf);
+                });
+
+                // Prepare request data
+                const requestData = {
+                    fusion_routers: fusionRouters,
+                    border_nodes: borderNodeConfigs,
+                    handoffs: handoffs,
+                    vrf_configs: vrfConfigs
+                };
+
                 const response = await fetch('/generate', {
                     method: 'POST',
                     headers: {
@@ -451,22 +796,64 @@
                     throw new Error(data.error || 'Generation failed');
                 }
 
-                generatedConfig = data.config;
-                displayConfigPreview(generatedConfig);
-                showStep(4);
+                generatedConfigs = data.configs;
+                displayConfigPreviews(generatedConfigs);
+                showStep(6);
 
             } catch (error) {
                 alert('Error: ' + error.message);
             }
         }
 
-        function displayConfigPreview(config) {
-            const preview = document.getElementById('configPreview');
-            preview.textContent = config;
+        function displayConfigPreviews(configs) {
+            const tabsContainer = document.getElementById('configTabs');
+            const contentContainer = document.getElementById('configTabContent');
+
+            let tabsHtml = '';
+            let contentHtml = '';
+            let isFirst = true;
+
+            Object.keys(configs).forEach(hostname => {
+                const tabId = hostname.replace(/[^a-zA-Z0-9]/g, '_');
+
+                tabsHtml += `
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link ${isFirst ? 'active' : ''}" id="${tabId}-tab"
+                                data-bs-toggle="tab" data-bs-target="#${tabId}"
+                                type="button" role="tab">
+                            ${hostname}
+                        </button>
+                    </li>
+                `;
+
+                contentHtml += `
+                    <div class="tab-pane fade ${isFirst ? 'show active' : ''}"
+                         id="${tabId}" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6>${hostname} Configuration</h6>
+                            <button class="btn btn-success btn-sm" onclick="downloadSingleConfig('${hostname}')">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                        </div>
+                        <div class="config-preview">${escapeHtml(configs[hostname])}</div>
+                    </div>
+                `;
+
+                isFirst = false;
+            });
+
+            tabsContainer.innerHTML = tabsHtml;
+            contentContainer.innerHTML = contentHtml;
         }
 
-        async function downloadConfig() {
-            const hostname = document.getElementById('fusionHostname').value.trim() || 'fusion-router';
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function downloadSingleConfig(hostname) {
+            const config = generatedConfigs[hostname];
             const filename = `${hostname}-config.txt`;
 
             try {
@@ -476,7 +863,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        config: generatedConfig,
+                        config: config,
                         filename: filename
                     })
                 });
@@ -497,6 +884,14 @@
 
             } catch (error) {
                 alert('Error: ' + error.message);
+            }
+        }
+
+        async function downloadAllConfigs() {
+            for (const hostname of Object.keys(generatedConfigs)) {
+                await downloadSingleConfig(hostname);
+                // Small delay between downloads
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
     </script>

@@ -10,14 +10,18 @@ service password-encryption
 !
 hostname {{ hostname }}
 !
-{% if vrfs %}
-{%- for vrf in vrfs %}
-vrf definition {{ vrf }}
- rd 1:4099
+{% if vrf_definitions %}
+{%- for vrf in vrf_definitions %}
+vrf definition {{ vrf.name }}
+ rd {{ vrf.rd }}
  !
  address-family ipv4
-  route-target export 1:4099
-  route-target import 1:4099
+{%- if vrf.rt_export_enabled %}
+  route-target export {{ vrf.rt_export_value }}
+{%- endif %}
+{%- if vrf.rt_import_enabled %}
+  route-target import {{ vrf.rt_import_value }}
+{%- endif %}
  exit-address-family
 !
 {%- endfor %}
@@ -28,9 +32,27 @@ interface Loopback0
  description BGP Router ID
  ip address {{ router_id }} 255.255.255.255
 !
+{% if interface_mode == 'svi' %}
+{# VLAN Definitions for SVI mode #}
+{%- for vlan in vlans %}
+vlan {{ vlan.id }}
+ name {{ vlan.name }}
+!
+{%- endfor %}
+{# Physical Interface Trunk Configuration #}
+{%- for physical in physical_interfaces %}
+interface {{ physical.name }}
+ description {{ physical.description }}
+ switchport mode trunk
+ switchport trunk allowed vlan {{ physical.allowed_vlans }}
+ no shutdown
+!
+{%- endfor %}
+{% endif %}
+{# Interface Configurations #}
 {% for interface in interfaces %}
-{%- if interface.vlan %}
-interface Vlan{{ interface.vlan }}
+{%- if interface.type == 'routed' %}
+interface {{ interface.name }}
  description {{ interface.description }}
 {%- if interface.vrf %}
  vrf forwarding {{ interface.vrf }}
@@ -43,6 +65,33 @@ interface Vlan{{ interface.vlan }}
  bfd interval {{ interface.bfd_interval }} min_rx {{ interface.bfd_min_rx }} multiplier {{ interface.bfd_multiplier }}
 {%- endif %}
  no shutdown
+!
+{%- elif interface.type == 'svi' %}
+interface Vlan{{ interface.vlan_id }}
+ description {{ interface.description }}
+{%- if interface.vrf %}
+ vrf forwarding {{ interface.vrf }}
+{%- endif %}
+ ip address {{ interface.ip_address }} {{ interface.subnet_mask }}
+ no ip redirects
+ no ip proxy-arp
+ ip route-cache same-interface
+{%- if interface.bfd_enabled %}
+ bfd interval {{ interface.bfd_interval }} min_rx {{ interface.bfd_min_rx }} multiplier {{ interface.bfd_multiplier }}
+{%- endif %}
+ no shutdown
+!
+{%- elif interface.type == 'subinterface' %}
+interface {{ interface.parent_interface }}.{{ interface.subif_id }}
+ description {{ interface.description }}
+ encapsulation {{ interface.encapsulation }}
+{%- if interface.vrf %}
+ vrf forwarding {{ interface.vrf }}
+{%- endif %}
+ ip address {{ interface.ip_address }} {{ interface.subnet_mask }}
+{%- if interface.bfd_enabled %}
+ bfd interval {{ interface.bfd_interval }} min_rx {{ interface.bfd_min_rx }} multiplier {{ interface.bfd_multiplier }}
+{%- endif %}
 !
 {%- endif %}
 {% endfor %}
@@ -70,10 +119,11 @@ router bgp {{ as_number }}
 {%- endfor %}
 {%- endif %}
  exit-address-family
-{%- for vrf in vrfs %}
+{%- if bgp_neighbors_vrf %}
+{%- for vrf_name, neighbors in bgp_neighbors_vrf.items() %}
  !
- address-family ipv4 vrf {{ vrf }}
-{%- for neighbor in bgp_neighbors_vrf[vrf] %}
+ address-family ipv4 vrf {{ vrf_name }}
+{%- for neighbor in neighbors %}
   neighbor {{ neighbor.ip }} remote-as {{ neighbor.remote_as }}
   neighbor {{ neighbor.ip }} description Border Node - {{ neighbor.source_interface }}
   neighbor {{ neighbor.ip }} update-source {{ neighbor.source_interface }}
@@ -83,6 +133,7 @@ router bgp {{ as_number }}
 {%- endfor %}
  exit-address-family
 {%- endfor %}
+{%- endif %}
 !
 ! BFD Configuration
 bfd-template single-hop FABRIC_BFD
