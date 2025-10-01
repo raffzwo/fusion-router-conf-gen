@@ -313,14 +313,14 @@
             stroke-width: 3;
         }
         .device-label {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
             fill: #333;
             text-anchor: middle;
             pointer-events: none;
         }
         .device-type {
-            font-size: 11px;
+            font-size: 13px;
             fill: #6c757d;
             text-anchor: middle;
             pointer-events: none;
@@ -329,7 +329,7 @@
         /* Connection Lines */
         .connection-path {
             fill: none;
-            stroke-width: 2.5;
+            stroke-width: 3;
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -354,14 +354,14 @@
             rx: 3;
         }
         .connection-label-text {
-            font-size: 10px;
+            font-size: 12px;
             font-weight: 600;
             text-anchor: middle;
             fill: #495057;
             pointer-events: none;
         }
         .connection-vrf-badge {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 600;
             text-anchor: middle;
             fill: white;
@@ -369,7 +369,7 @@
         }
         .connection-dot {
             transition: all 0.2s ease;
-            r: 4;
+            r: 5;
         }
         .connection-dot.configured {
             fill: #28a745;
@@ -400,7 +400,7 @@
 
         /* Interface Labels */
         .interface-label {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 600;
             fill: #495057;
             text-anchor: middle;
@@ -413,23 +413,23 @@
             rx: 3;
         }
         .border-interface-list {
-            font-size: 8px;
+            font-size: 10px;
             fill: #495057;
             pointer-events: none;
         }
         .border-interface-label {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 600;
             fill: #667eea;
             pointer-events: none;
         }
         .fusion-interface-list {
-            font-size: 8px;
+            font-size: 10px;
             fill: #495057;
             pointer-events: none;
         }
         .interface-port-label {
-            font-size: 8px;
+            font-size: 10px;
             font-weight: 500;
             fill: #764ba2;
             pointer-events: none;
@@ -1005,6 +1005,125 @@
         let currentDragData = null;
         let fusionRouterPositions = {}; // Store fusion router SVG positions for drop detection
 
+        // ============================================
+        // INTERFACE NAME VALIDATION
+        // ============================================
+
+        /**
+         * Validate Cisco interface name (matches backend regex)
+         * Accepts both full names (GigabitEthernet) and abbreviations (Gi, Te, Ten, etc.)
+         */
+        function validateInterfaceName(interfaceName) {
+            if (!interfaceName || interfaceName.trim() === '') {
+                return { valid: false, error: 'Interface name is required' };
+            }
+
+            const trimmed = interfaceName.trim();
+            // Match backend regex pattern (case insensitive)
+            const pattern = /^(GigabitEthernet|Gi|TenGigabitEthernet|Ten|Te|FastEthernet|Fa|FortyGigabitEthernet|FortyGigE|Fo|HundredGigE|Hu|TwentyFiveGigE|Twe|Port-channel|Po)[\d/\.]+$/i;
+
+            if (!pattern.test(trimmed)) {
+                return {
+                    valid: false,
+                    error: 'Invalid interface format. Examples: GigabitEthernet1/0/1, Gi1/0/1, Ten1/0/1, TenGigabitEthernet1/0/1, Port-channel10'
+                };
+            }
+
+            return { valid: true, error: null };
+        }
+
+        /**
+         * Show inline validation error for an input field
+         */
+        function showValidationError(inputElement, errorMessage) {
+            inputElement.classList.add('is-invalid');
+            inputElement.classList.remove('is-valid');
+
+            // Remove existing error message if any
+            let errorDiv = inputElement.parentElement.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+
+            // Add new error message
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback d-block';
+            errorDiv.textContent = errorMessage;
+            inputElement.parentElement.appendChild(errorDiv);
+        }
+
+        /**
+         * Show validation success for an input field
+         */
+        function showValidationSuccess(inputElement) {
+            inputElement.classList.remove('is-invalid');
+            inputElement.classList.add('is-valid');
+
+            // Remove error message if any
+            const errorDiv = inputElement.parentElement.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+
+        /**
+         * Clear validation styling from an input field
+         */
+        function clearValidation(inputElement) {
+            inputElement.classList.remove('is-invalid', 'is-valid');
+            const errorDiv = inputElement.parentElement.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+
+        /**
+         * Attach validation listeners to OSPF interface fields
+         */
+        function attachOspfInterfaceValidation() {
+            // Wait a bit to ensure DOM elements exist
+            setTimeout(() => {
+                const router1Interface = document.getElementById('ospfRouter1Interface');
+                const router2Interface = document.getElementById('ospfRouter2Interface');
+
+                if (router1Interface) {
+                    router1Interface.addEventListener('blur', function() {
+                        const result = validateInterfaceName(this.value);
+                        if (!result.valid) {
+                            showValidationError(this, result.error);
+                        } else {
+                            showValidationSuccess(this);
+                        }
+                    });
+
+                    router1Interface.addEventListener('input', function() {
+                        // Clear validation on input to allow user to type
+                        if (this.classList.contains('is-invalid') || this.classList.contains('is-valid')) {
+                            clearValidation(this);
+                        }
+                    });
+                }
+
+                if (router2Interface) {
+                    router2Interface.addEventListener('blur', function() {
+                        const result = validateInterfaceName(this.value);
+                        if (!result.valid) {
+                            showValidationError(this, result.error);
+                        } else {
+                            showValidationSuccess(this);
+                        }
+                    });
+
+                    router2Interface.addEventListener('input', function() {
+                        // Clear validation on input to allow user to type
+                        if (this.classList.contains('is-invalid') || this.classList.contains('is-valid')) {
+                            clearValidation(this);
+                        }
+                    });
+                }
+            }, 300);
+        }
+
         function showStep(stepNumber) {
             // Hide all steps
             document.querySelectorAll('.step-content').forEach(el => el.style.display = 'none');
@@ -1325,6 +1444,9 @@
             }
 
             container.innerHTML = html;
+
+            // Attach validation listeners to the newly created interface fields
+            attachOspfInterfaceValidation();
         }
 
         function toggleOspfAuth() {
@@ -1508,9 +1630,9 @@
             container.innerHTML = '';
 
             // Enhanced dimensions for more detail
-            const width = 1800;
-            const height = 1000;
-            const margin = { left: 250, right: 250, top: 100, bottom: 100 };
+            const width = 2000;
+            const height = 1200;
+            const margin = { left: 280, right: 280, top: 120, bottom: 120 };
 
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('id', 'topologySvg');
@@ -1523,11 +1645,11 @@
             mainGroup.setAttribute('id', 'mainGroup');
             svg.appendChild(mainGroup);
 
-            // Calculate positions
+            // Calculate positions - increased device sizes for better visibility
             const fusionX = margin.left;
             const borderX = width - margin.right;
-            const deviceWidth = 180;
-            const deviceHeight = 80;
+            const deviceWidth = 200;
+            const deviceHeight = 100;
 
             const fusionCount = fusionRouters.length;
             const borderCount = borderNodeConfigs.length;
@@ -1773,8 +1895,9 @@
                 c.border_vlan_id === config.border_vlan_id
             );
 
-            // Calculate offset: spread connections vertically
-            const offsetSpacing = 15; // pixels between each line
+            // Calculate offset: spread connections vertically with increased spacing
+            // Increased from 15 to 25 pixels for better separation
+            const offsetSpacing = 25; // pixels between each line
             const totalOffset = (sameConnections.length - 1) * offsetSpacing;
             const startOffset = -totalOffset / 2;
 
@@ -1860,39 +1983,49 @@
             connGroup.appendChild(vrfText);
 
             // Add fusion router interface label (left side of connection)
+            // Positioned further from connection point to avoid overlap
             const fusionInterfaceLabel = formatInterfaceLabel(config);
             if (fusionInterfaceLabel) {
                 const fusionIfBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                const labelWidth = fusionInterfaceLabel.length * 5.5 + 10;
-                fusionIfBg.setAttribute('x', x1 + 8);
-                fusionIfBg.setAttribute('y', y1 - 10);
+                const labelWidth = fusionInterfaceLabel.length * 6.5 + 12;
+                const labelHeight = 20;
+                const labelOffsetX = 12; // Increased horizontal offset
+                const labelOffsetY = -18; // Increased vertical offset above connection
+
+                fusionIfBg.setAttribute('x', x1 + labelOffsetX);
+                fusionIfBg.setAttribute('y', y1 + labelOffsetY);
                 fusionIfBg.setAttribute('width', labelWidth);
-                fusionIfBg.setAttribute('height', '16');
+                fusionIfBg.setAttribute('height', labelHeight);
                 fusionIfBg.setAttribute('class', 'interface-label-bg');
                 connGroup.appendChild(fusionIfBg);
 
                 const fusionIfText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                fusionIfText.setAttribute('x', x1 + 8 + labelWidth / 2);
-                fusionIfText.setAttribute('y', y1 - 1);
+                fusionIfText.setAttribute('x', x1 + labelOffsetX + labelWidth / 2);
+                fusionIfText.setAttribute('y', y1 + labelOffsetY + 13);
                 fusionIfText.setAttribute('class', 'interface-label');
                 fusionIfText.textContent = fusionInterfaceLabel;
                 connGroup.appendChild(fusionIfText);
             }
 
             // Add border VLAN interface label (right side of connection)
+            // Positioned further from connection point to avoid overlap
             const borderIfBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             const borderLabel = `VLAN ${config.border_vlan_id}`;
-            const borderLabelWidth = borderLabel.length * 5.5 + 10;
-            borderIfBg.setAttribute('x', x2 - borderLabelWidth - 8);
-            borderIfBg.setAttribute('y', y2 - 10);
+            const borderLabelWidth = borderLabel.length * 6.5 + 12;
+            const labelHeight = 20;
+            const labelOffsetX = 12; // Increased horizontal offset
+            const labelOffsetY = -18; // Increased vertical offset above connection
+
+            borderIfBg.setAttribute('x', x2 - borderLabelWidth - labelOffsetX);
+            borderIfBg.setAttribute('y', y2 + labelOffsetY);
             borderIfBg.setAttribute('width', borderLabelWidth);
-            borderIfBg.setAttribute('height', '16');
+            borderIfBg.setAttribute('height', labelHeight);
             borderIfBg.setAttribute('class', 'interface-label-bg');
             connGroup.appendChild(borderIfBg);
 
             const borderIfText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            borderIfText.setAttribute('x', x2 - borderLabelWidth / 2 - 8);
-            borderIfText.setAttribute('y', y2 - 1);
+            borderIfText.setAttribute('x', x2 - borderLabelWidth / 2 - labelOffsetX);
+            borderIfText.setAttribute('y', y2 + labelOffsetY + 13);
             borderIfText.setAttribute('class', 'interface-port-label');
             borderIfText.textContent = borderLabel;
             connGroup.appendChild(borderIfText);
@@ -2109,7 +2242,18 @@
             const mainGroup = document.getElementById('mainGroup');
             if (!mainGroup) return;
 
-            mainGroup.setAttribute('transform', `translate(${panX}, ${panY}) scale(${zoomLevel})`);
+            // Apply transform with proper order: translate then scale from origin
+            // This ensures zoom happens from center and pan works correctly
+            const svg = document.getElementById('topologySvg');
+            if (!svg) return;
+
+            const viewBox = svg.viewBox.baseVal;
+            const centerX = viewBox.width / 2;
+            const centerY = viewBox.height / 2;
+
+            // Transform order: translate to origin, scale, translate back, then apply pan
+            const transform = `translate(${centerX + panX}, ${centerY + panY}) scale(${zoomLevel}) translate(${-centerX}, ${-centerY})`;
+            mainGroup.setAttribute('transform', transform);
         }
 
         function updateZoomDisplay() {
@@ -2512,6 +2656,17 @@
                     if (!ospfParams.router1_interface || !ospfParams.router1_ip ||
                         !ospfParams.router2_interface || !ospfParams.router2_ip) {
                         throw new Error('All OSPF interface fields are required');
+                    }
+
+                    // Validate interface name format
+                    const router1Result = validateInterfaceName(ospfParams.router1_interface);
+                    if (!router1Result.valid) {
+                        throw new Error(`Router 1 Interface: ${router1Result.error}`);
+                    }
+
+                    const router2Result = validateInterfaceName(ospfParams.router2_interface);
+                    if (!router2Result.valid) {
+                        throw new Error(`Router 2 Interface: ${router2Result.error}`);
                     }
                 }
 

@@ -514,9 +514,10 @@ def validate_ospf_params(ospf_params):
     except ValueError:
         raise ValueError(f"Invalid subnet mask: {subnet_mask}")
 
-    # Validate interface names with regex
+    # Validate interface names with regex (support both full and abbreviated forms)
     interface_pattern = re.compile(
-        r'^(GigabitEthernet|TenGigabitEthernet|FortyGigE|HundredGigE|TwentyFiveGigE|Port-channel)[\d/]+$'
+        r'^(GigabitEthernet|Gi|TenGigabitEthernet|Ten|Te|FastEthernet|Fa|FortyGigabitEthernet|FortyGigE|Fo|HundredGigE|Hu|TwentyFiveGigE|Twe|Port-channel|Po)[\d/\.]+$',
+        re.IGNORECASE
     )
 
     router1_interface = ospf_params.get('router1_interface')
