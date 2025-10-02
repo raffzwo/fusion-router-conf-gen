@@ -608,13 +608,15 @@ def build_vrf_config(vrf_params):
 
 def build_ibgp_configs(fusion_routers, ibgp_params):
     """
-    Build iBGP configuration for both fusion routers.
+    Build iBGP configuration for both fusion routers with VRF awareness and VPNv4 support.
 
     Args:
         fusion_routers: List of fusion router configurations
         ibgp_params: Dict with iBGP parameters from user input
             {
                 'enabled': True,
+                'vrfs': [None, 'VRF1', 'VRF2'],  # None = global table
+                'use_vpnv4': True,  # Use VPNv4 address-family for VRF route exchange
                 'bfd_enabled': True,
                 'bfd_interval': 250,
                 'bfd_min_rx': 250,
@@ -635,6 +637,20 @@ def build_ibgp_configs(fusion_routers, ibgp_params):
             f"Found: {', '.join(as_numbers)}"
         )
 
+    # Get list of VRFs for iBGP (default to just global table if not specified)
+    ibgp_vrfs = ibgp_params.get('vrfs', [None])
+    if not ibgp_vrfs:
+        ibgp_vrfs = [None]  # At least include global table
+
+    # Check if VPNv4 is enabled (recommended for multi-VRF scenarios)
+    use_vpnv4 = ibgp_params.get('use_vpnv4', False)
+
+    # If VPNv4 is enabled and there are VRFs (not just global table), use VPNv4
+    has_vrfs = any(vrf is not None for vrf in ibgp_vrfs)
+    if use_vpnv4 and not has_vrfs:
+        # VPNv4 doesn't make sense without VRFs, fall back to standard iBGP
+        use_vpnv4 = False
+
     ibgp_configs = []
 
     for i, router in enumerate(fusion_routers):
@@ -649,6 +665,8 @@ def build_ibgp_configs(fusion_routers, ibgp_params):
             'peer_hostname': peer_router['hostname'],
             'peer_ip': peer_router['bgp_router_id'],
             'update_source': 'Loopback0',
+            'vrfs': ibgp_vrfs,  # List of VRFs to enable iBGP in
+            'use_vpnv4': use_vpnv4,  # Use VPNv4 address-family for VRF routes
             'bfd_enabled': ibgp_params.get('bfd_enabled', True),
             'bfd_interval': ibgp_params.get('bfd_interval', 250),
             'bfd_min_rx': ibgp_params.get('bfd_min_rx', 250),
@@ -719,6 +737,7 @@ def build_ospf_configs(fusion_routers, ospf_params):
         config = {
             'enabled': True,
             'router_id': router['router_id'],
+            'vrf': ospf_params.get('vrf'),  # VRF for OSPF (None = global table)
             'process_id': ospf_params['process_id'],
             'area': ospf_params['area'],
             'network_address': network_address,

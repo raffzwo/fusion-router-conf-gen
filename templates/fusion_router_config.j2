@@ -102,6 +102,9 @@ interface {{ interface.parent_interface }}.{{ interface.subif_id }}
 {%- if ospf_config.interface_mode == 'physical' %}
 interface {{ ospf_config.interface_name }}
  description OSPF underlay to peer fusion router
+{%- if ospf_config.vrf %}
+ vrf forwarding {{ ospf_config.vrf }}
+{%- endif %}
  ip address {{ ospf_config.ip_address }} {{ ospf_config.subnet_mask }}
 {%- if ospf_config.cost %}
  ip ospf cost {{ ospf_config.cost }}
@@ -129,6 +132,9 @@ interface {{ ospf_config.interface_name }}
 !
 interface Vlan{{ ospf_config.vlan_id }}
  description OSPF underlay to peer fusion router
+{%- if ospf_config.vrf %}
+ vrf forwarding {{ ospf_config.vrf }}
+{%- endif %}
  ip address {{ ospf_config.ip_address }} {{ ospf_config.subnet_mask }}
 {%- if ospf_config.cost %}
  ip ospf cost {{ ospf_config.cost }}
@@ -148,6 +154,9 @@ interface Vlan{{ ospf_config.vlan_id }}
 interface {{ ospf_config.interface_name }}.{{ ospf_config.vlan_id }}
  description OSPF underlay to peer fusion router
  encapsulation {{ ospf_config.encapsulation }}
+{%- if ospf_config.vrf %}
+ vrf forwarding {{ ospf_config.vrf }}
+{%- endif %}
  ip address {{ ospf_config.ip_address }} {{ ospf_config.subnet_mask }}
 {%- if ospf_config.cost %}
  ip ospf cost {{ ospf_config.cost }}
@@ -168,6 +177,9 @@ interface {{ ospf_config.interface_name }}.{{ ospf_config.vlan_id }}
 ! OSPF Routing Process Configuration
 {% if ospf_config and ospf_config.enabled %}
 router ospf {{ ospf_config.process_id }}
+{%- if ospf_config.vrf %}
+ vrf {{ ospf_config.vrf }}
+{%- endif %}
  router-id {{ router_id }}
 {%- if ospf_config.bfd_enabled %}
  bfd all-interfaces
@@ -201,7 +213,7 @@ router bgp {{ as_number }}
 {%- endif %}
 {%- if ibgp_config and ibgp_config.enabled %}
  !
- ! iBGP peer configuration
+ ! iBGP peer configuration (GLOBAL - configured once for VPNv4)
  neighbor {{ ibgp_config.peer_ip }} remote-as {{ as_number }}
  neighbor {{ ibgp_config.peer_ip }} description iBGP peer - {{ ibgp_config.peer_hostname }}
  neighbor {{ ibgp_config.peer_ip }} update-source {{ ibgp_config.update_source }}
@@ -219,17 +231,30 @@ router bgp {{ as_number }}
 {%- endfor %}
 {%- endif %}
 {%- if ibgp_config and ibgp_config.enabled %}
+{%- if ibgp_config.vrfs and None in ibgp_config.vrfs %}
   !
-  ! iBGP peer activation
+  ! iBGP peer activation in global routing table
   neighbor {{ ibgp_config.peer_ip }} activate
   neighbor {{ ibgp_config.peer_ip }} send-community both
+  neighbor {{ ibgp_config.peer_ip }} next-hop-self
+{%- endif %}
 {%- endif %}
  exit-address-family
+{%- if ibgp_config and ibgp_config.enabled and ibgp_config.use_vpnv4 %}
+ !
+ ! VPNv4 Address-Family for VRF route exchange
+ ! This carries routes for all VRFs between iBGP peers with Route Targets
+ address-family vpnv4
+  neighbor {{ ibgp_config.peer_ip }} activate
+  neighbor {{ ibgp_config.peer_ip }} send-community extended
+ exit-address-family
+{%- endif %}
 {%- if bgp_neighbors_vrf %}
 {%- for vrf_name, neighbors in bgp_neighbors_vrf.items() %}
  !
  address-family ipv4 vrf {{ vrf_name }}
 {%- for neighbor in neighbors %}
+  ! eBGP neighbor in VRF {{ vrf_name }}
   neighbor {{ neighbor.ip }} remote-as {{ neighbor.remote_as }}
   neighbor {{ neighbor.ip }} description Border Node - {{ neighbor.source_interface }}
   neighbor {{ neighbor.ip }} update-source {{ neighbor.source_interface }}
@@ -240,14 +265,8 @@ router bgp {{ as_number }}
   neighbor {{ neighbor.ip }} next-hop-self
 {%- endif %}
 {%- endfor %}
-{%- if ibgp_config and ibgp_config.enabled %}
-  !
-  ! iBGP peer in VRF {{ vrf_name }}
-  neighbor {{ ibgp_config.peer_ip }} remote-as {{ as_number }}
-  neighbor {{ ibgp_config.peer_ip }} description iBGP peer - {{ ibgp_config.peer_hostname }}
-  neighbor {{ ibgp_config.peer_ip }} activate
-  neighbor {{ ibgp_config.peer_ip }} send-community both
-{%- endif %}
+  ! Note: NO iBGP neighbors in VRF address-families when using VPNv4
+  ! VRF routes are exchanged via VPNv4 address-family with Route Targets
  exit-address-family
 {%- endfor %}
 {%- endif %}

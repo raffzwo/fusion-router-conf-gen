@@ -685,53 +685,7 @@
             font-size: 0.9rem;
             font-weight: 600;
         }
-
-        /* Table-based mapping styles */
-        .mapping-table {
-            width: 100%;
-            margin-bottom: 1.5rem;
-        }
-        .mapping-table th {
-            background-color: #667eea;
-            color: white;
-            padding: 0.75rem;
-            font-weight: 600;
-        }
-        .mapping-table td {
-            padding: 0.75rem;
-            vertical-align: middle;
-        }
-        .mapping-table tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-        .mapping-row-configured {
-            background-color: #d4edda;
-        }
-        .border-node-section-table {
-            margin-bottom: 2rem;
-        }
-        .border-node-header-table {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-            color: white;
-            padding: 1rem;
-            border-radius: 0.25rem;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        #topologyPreview {
-            margin-top: 2rem;
-        }
-        #networkDiagram {
-            border: 2px solid #dee2e6;
-            border-radius: 0.25rem;
-            background-color: #ffffff;
-        }
     </style>
-
-    <!-- vis.js Network for topology visualization -->
-    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
     <div class="header-section">
@@ -1071,76 +1025,26 @@
                 </div>
             </div>
 
-            <!-- NEW: Table-Based Mapping Interface -->
-            <div class="container-fluid mt-3">
-                <div class="card">
-                    <div class="card-body">
-                        <p class="mb-3">
-                            <i class="fas fa-info-circle"></i>
-                            Configure interface handoffs by selecting the Fusion router and interface for each border node VLAN interface.
-                        </p>
-
-                        <!-- Border Node Tables Container -->
-                        <div id="borderNodeTablesContainer">
-                            <!-- Tables will be dynamically generated here (one per border node) -->
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="mt-4 d-flex justify-content-between align-items-center">
-                            <button class="btn btn-secondary" onclick="showStep(3)">
-                                <i class="fas fa-arrow-left"></i> Back to Interface Modes
-                            </button>
-                            <div>
-                                <button class="btn btn-info me-2" onclick="previewTopology()">
-                                    <i class="fas fa-project-diagram"></i> Preview Network Topology
-                                </button>
-                                <button class="btn btn-primary" onclick="proceedToStep5()">
-                                    Next: Configure VRFs <i class="fas fa-arrow-right"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Topology Preview Modal -->
-            <div class="modal fade" id="topologyPreviewModal" tabindex="-1" aria-labelledby="topologyPreviewLabel" aria-hidden="true">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="topologyPreviewLabel">
-                                <i class="fas fa-project-diagram"></i> Network Topology Preview
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div id="networkDiagram" style="height: 600px;"></div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ARCHIVED: Old SVG-based drag-and-drop interface (kept for reference, not displayed) -->
-            <!--
+            <!-- Router View Selector -->
             <div id="routerViewSelector" class="container-fluid mt-3" style="display: none;">
                 <div class="card mb-3">
                     <div class="card-body">
                         <h6 class="card-subtitle mb-2 text-muted">Select Router View:</h6>
                         <div id="routerViewButtons" class="btn-group" role="group">
+                            <!-- Dynamically populated with router selection buttons -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="container-fluid mt-3" style="display: none;">
+            <!-- Topology Diagram Container -->
+            <div class="container-fluid mt-3">
                 <div class="card">
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-9">
                                 <div id="topologyContainer" style="width: 100%; height: 600px; overflow: auto; border: 1px solid #dee2e6; border-radius: 4px; background-color: #f8f9fa;">
+                                    <!-- SVG topology diagram will be rendered here -->
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -1150,6 +1054,7 @@
                                     </div>
                                     <div class="card-body p-2" style="max-height: 600px; overflow-y: auto;">
                                         <div id="borderNodesList">
+                                            <!-- Border nodes and interfaces will be listed here -->
                                         </div>
                                     </div>
                                 </div>
@@ -1158,7 +1063,19 @@
                     </div>
                 </div>
             </div>
-            -->
+
+            <!-- NEW: Modern Tabbed Layout -->
+            <div class="container-fluid mt-3">
+                <!-- Fusion Router Tabs -->
+                <ul class="nav nav-tabs" id="fusionRouterTabs" role="tablist">
+                    <!-- Dynamically populated per router -->
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="fusionRouterTabContent">
+                    <!-- Each router gets its own tab with clean card layout -->
+                </div>
+            </div>
         </div>
 
         <!-- Connection Configuration Modal -->
@@ -1753,465 +1670,25 @@
 
         function proceedToStep4() {
             currentInterfaceMode = getSelectedInterfaceMode();
-            // Initialize with empty connections
-            connectionConfigs = {};
-            // Render the new table-based interface
-            renderBorderNodeTables();
+            initializeTopologyDiagram();
             showStep(4);
         }
 
         // ============================================
-        // NEW: TABLE-BASED MAPPING INTERFACE
+        // TOPOLOGY DIAGRAM - ENHANCED VERSION
         // ============================================
 
-        function renderBorderNodeTables() {
-            const container = document.getElementById('borderNodeTablesContainer');
-            if (!container) {
-                console.error('Border node tables container not found');
-                return;
-            }
-
-            let html = '';
-
-            // Create one table per border node
-            borderNodeConfigs.forEach((borderNode, bnIdx) => {
-                const loopbackMatch = borderNode.raw_config?.match(/interface Loopback0\s+ip address ([0-9.]+)/);
-                const loopbackIp = loopbackMatch ? loopbackMatch[1] : 'N/A';
-
-                html += `
-                    <div class="border-node-section-table">
-                        <div class="border-node-header-table">
-                            <i class="fas fa-server"></i> Border Node: ${borderNode.hostname}
-                            <span class="badge bg-light text-dark ms-2">${loopbackIp}</span>
-                            <span class="badge bg-secondary ms-2">${borderNode.vlan_interfaces.length} VLAN Interfaces</span>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover table-bordered mapping-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 15%;">Border Interface</th>
-                                        <th style="width: 10%;">VLAN</th>
-                                        <th style="width: 15%;">IP Address</th>
-                                        <th style="width: 10%;">VRF</th>
-                                        <th style="width: 20%;">Fusion Router</th>
-                                        <th style="width: 20%;">Fusion Interface</th>
-                                        <th style="width: 10%;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="borderTable_${bnIdx}">
-                `;
-
-                borderNode.vlan_interfaces.forEach((vlan, vIdx) => {
-                    const rowId = `row_${bnIdx}_${vIdx}`;
-                    const connectionKey = `${borderNode.hostname}_${vlan.vlan}`;
-                    const existingConfig = findConnectionConfig(borderNode.hostname, vlan.vlan);
-                    const isConfigured = existingConfig !== null;
-
-                    html += `
-                        <tr id="${rowId}" class="${isConfigured ? 'mapping-row-configured' : ''}">
-                            <td>Vlan${vlan.vlan}</td>
-                            <td>${vlan.vlan}</td>
-                            <td>${vlan.ip_address}/${getMaskBits(vlan.subnet_mask)}</td>
-                            <td><span class="badge ${vlan.vrf ? 'bg-info' : 'bg-secondary'}">${vlan.vrf || 'Global'}</span></td>
-                            <td>
-                                <select class="form-select form-select-sm" id="fusionSelect_${bnIdx}_${vIdx}"
-                                        onchange="updateConnectionFromTable(${bnIdx}, ${vIdx})">
-                                    <option value="">-- Select Router --</option>
-                                    ${fusionRouters.map(router => `
-                                        <option value="${router.router_id}"
-                                                ${existingConfig && existingConfig.fusion_router_id === router.router_id ? 'selected' : ''}>
-                                            ${router.hostname}
-                                        </option>
-                                    `).join('')}
-                                </select>
-                            </td>
-                            <td>
-                                <div id="fusionInterfaceContainer_${bnIdx}_${vIdx}">
-                                    <select class="form-select form-select-sm" disabled>
-                                        <option>Select router first</option>
-                                    </select>
-                                </div>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="configureConnection(${bnIdx}, ${vIdx})"
-                                        id="configBtn_${bnIdx}_${vIdx}" ${!isConfigured ? 'disabled' : ''}>
-                                    <i class="fas fa-cog"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteConnectionFromTable(${bnIdx}, ${vIdx})"
-                                        id="deleteBtn_${bnIdx}_${vIdx}" ${!isConfigured ? 'disabled' : ''} style="display: ${isConfigured ? 'inline-block' : 'none'};">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-
-                html += `
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-
-            // Initialize interface dropdowns for already configured connections
-            borderNodeConfigs.forEach((borderNode, bnIdx) => {
-                borderNode.vlan_interfaces.forEach((vlan, vIdx) => {
-                    const existingConfig = findConnectionConfig(borderNode.hostname, vlan.vlan);
-                    if (existingConfig) {
-                        renderFusionInterfaceDropdown(bnIdx, vIdx, existingConfig.fusion_router_id, existingConfig);
-                    }
-                });
-            });
-        }
-
-        function findConnectionConfig(borderHostname, vlan) {
-            for (const key in connectionConfigs) {
-                const config = connectionConfigs[key];
-                if (config.border_hostname === borderHostname && config.border_vlan_id === vlan) {
-                    return config;
-                }
-            }
-            return null;
-        }
-
-        function updateConnectionFromTable(borderNodeIdx, vlanIdx) {
-            const borderNode = borderNodeConfigs[borderNodeIdx];
-            const vlan = borderNode.vlan_interfaces[vlanIdx];
-
-            const fusionSelect = document.getElementById(`fusionSelect_${borderNodeIdx}_${vlanIdx}`);
-            const selectedRouterId = parseInt(fusionSelect.value);
-
-            if (!selectedRouterId) {
-                // Clear selection - remove interface dropdown
-                const interfaceContainer = document.getElementById(`fusionInterfaceContainer_${borderNodeIdx}_${vlanIdx}`);
-                interfaceContainer.innerHTML = `
-                    <select class="form-select form-select-sm" disabled>
-                        <option>Select router first</option>
-                    </select>
-                `;
-                // Disable config button
-                document.getElementById(`configBtn_${borderNodeIdx}_${vlanIdx}`).disabled = true;
-                // Remove connection if exists
-                deleteConnectionFromTable(borderNodeIdx, vlanIdx);
-                return;
-            }
-
-            // Render fusion interface dropdown
-            renderFusionInterfaceDropdown(borderNodeIdx, vlanIdx, selectedRouterId);
-        }
-
-        function renderFusionInterfaceDropdown(borderNodeIdx, vlanIdx, fusionRouterId, existingConfig = null) {
-            const borderNode = borderNodeConfigs[borderNodeIdx];
-            const vlan = borderNode.vlan_interfaces[vlanIdx];
-            const interfaceContainer = document.getElementById(`fusionInterfaceContainer_${borderNodeIdx}_${vlanIdx}`);
-
-            // Get available interfaces based on interface mode
-            let interfaceOptions = '';
-
-            if (currentInterfaceMode === 'routed') {
-                // Physical interfaces
-                const physicalInterfaces = ['GigabitEthernet0/0/0', 'GigabitEthernet0/0/1', 'GigabitEthernet0/0/2', 'GigabitEthernet0/0/3'];
-                interfaceOptions = physicalInterfaces.map(intf => `
-                    <option value="${intf}" ${existingConfig && existingConfig.interface_name === intf ? 'selected' : ''}>
-                        ${intf}
-                    </option>
-                `).join('');
-            } else if (currentInterfaceMode === 'svi') {
-                // SVI interfaces
-                for (let i = 10; i <= 50; i += 10) {
-                    interfaceOptions += `
-                        <option value="Vlan${i}" ${existingConfig && existingConfig.vlan_id === i ? 'selected' : ''}>
-                            Vlan${i}
-                        </option>
-                    `;
-                }
-            } else if (currentInterfaceMode === 'subinterface') {
-                // Subinterfaces
-                const parentInterfaces = ['GigabitEthernet0/0/0', 'GigabitEthernet0/0/1'];
-                parentInterfaces.forEach(parent => {
-                    for (let subId = 10; subId <= 100; subId += 10) {
-                        const fullName = `${parent}.${subId}`;
-                        interfaceOptions += `
-                            <option value="${fullName}" ${existingConfig && existingConfig.interface_name === parent && existingConfig.subif_id === subId ? 'selected' : ''}>
-                                ${fullName}
-                            </option>
-                        `;
-                    }
-                });
-            }
-
-            interfaceContainer.innerHTML = `
-                <select class="form-select form-select-sm" id="fusionInterface_${borderNodeIdx}_${vlanIdx}"
-                        onchange="handleInterfaceSelection(${borderNodeIdx}, ${vlanIdx}, ${fusionRouterId})">
-                    <option value="">-- Select Interface --</option>
-                    ${interfaceOptions}
-                </select>
-            `;
-
-            // If there's an existing configuration, trigger interface selection
-            if (existingConfig) {
-                handleInterfaceSelection(borderNodeIdx, vlanIdx, fusionRouterId);
-            }
-        }
-
-        function handleInterfaceSelection(borderNodeIdx, vlanIdx, fusionRouterId) {
-            const borderNode = borderNodeConfigs[borderNodeIdx];
-            const vlan = borderNode.vlan_interfaces[vlanIdx];
-            const interfaceSelect = document.getElementById(`fusionInterface_${borderNodeIdx}_${vlanIdx}`);
-            const selectedInterface = interfaceSelect.value;
-
-            if (!selectedInterface) {
-                // Disable config button if no interface selected
-                document.getElementById(`configBtn_${borderNodeIdx}_${vlanIdx}`).disabled = true;
-                return;
-            }
-
-            // Enable config button
-            document.getElementById(`configBtn_${borderNodeIdx}_${vlanIdx}`).disabled = false;
-
-            // Create or update connection configuration
-            const connectionKey = `${borderNode.hostname}_${vlan.vlan}_${fusionRouterId}`;
-
-            // Calculate peer IP for Fusion router
-            const peerIp = calculateFusionIP(vlan.ip_address);
-
-            // Create basic configuration
-            const config = {
-                border_hostname: borderNode.hostname,
-                border_vlan_id: vlan.vlan,
-                border_ip: vlan.ip_address,
-                border_subnet_mask: vlan.subnet_mask,
-                border_vrf: vlan.vrf || '',
-                fusion_router_id: fusionRouterId,
-                fusion_ip: peerIp,
-                interface_mode: currentInterfaceMode
-            };
-
-            // Add mode-specific fields
-            if (currentInterfaceMode === 'routed') {
-                config.interface_name = selectedInterface;
-            } else if (currentInterfaceMode === 'svi') {
-                const vlanId = parseInt(selectedInterface.replace('Vlan', ''));
-                config.vlan_id = vlanId;
-                config.physical_interface = 'GigabitEthernet0/0/0'; // Default
-            } else if (currentInterfaceMode === 'subinterface') {
-                const parts = selectedInterface.split('.');
-                config.interface_name = parts[0];
-                config.subif_id = parseInt(parts[1]);
-            }
-
-            // Store in connectionConfigs
-            connectionConfigs[connectionKey] = config;
-
-            // Update row styling
-            const row = document.getElementById(`row_${borderNodeIdx}_${vlanIdx}`);
-            row.classList.add('mapping-row-configured');
-
-            // Show delete button
-            const deleteBtn = document.getElementById(`deleteBtn_${borderNodeIdx}_${vlanIdx}`);
-            deleteBtn.style.display = 'inline-block';
-            deleteBtn.disabled = false;
-
-            console.log('Connection created:', config);
-        }
-
-        function configureConnection(borderNodeIdx, vlanIdx) {
-            const borderNode = borderNodeConfigs[borderNodeIdx];
-            const vlan = borderNode.vlan_interfaces[vlanIdx];
-            const existingConfig = findConnectionConfig(borderNode.hostname, vlan.vlan);
-
-            if (!existingConfig) {
-                alert('Please select a Fusion router and interface first.');
-                return;
-            }
-
-            // Store current connection for modal
-            currentConnection = existingConfig;
-
-            // Open the existing connection modal for detailed configuration
-            openConnectionModal(borderNode.hostname, vlan.vlan, vlan.ip_address, vlan.vrf, vlan.subnet_mask);
-        }
-
-        function deleteConnectionFromTable(borderNodeIdx, vlanIdx) {
-            const borderNode = borderNodeConfigs[borderNodeIdx];
-            const vlan = borderNode.vlan_interfaces[vlanIdx];
-
-            // Find and delete the connection
-            for (const key in connectionConfigs) {
-                const config = connectionConfigs[key];
-                if (config.border_hostname === borderNode.hostname && config.border_vlan_id === vlan.vlan) {
-                    delete connectionConfigs[key];
-                    break;
-                }
-            }
-
-            // Reset row styling
-            const row = document.getElementById(`row_${borderNodeIdx}_${vlanIdx}`);
-            row.classList.remove('mapping-row-configured');
-
-            // Reset dropdowns
-            const fusionSelect = document.getElementById(`fusionSelect_${borderNodeIdx}_${vlanIdx}`);
-            fusionSelect.value = '';
-
-            const interfaceContainer = document.getElementById(`fusionInterfaceContainer_${borderNodeIdx}_${vlanIdx}`);
-            interfaceContainer.innerHTML = `
-                <select class="form-select form-select-sm" disabled>
-                    <option>Select router first</option>
-                </select>
-            `;
-
-            // Disable buttons
-            document.getElementById(`configBtn_${borderNodeIdx}_${vlanIdx}`).disabled = true;
-            const deleteBtn = document.getElementById(`deleteBtn_${borderNodeIdx}_${vlanIdx}`);
-            deleteBtn.style.display = 'none';
-            deleteBtn.disabled = true;
-        }
-
-        // ============================================
-        // VIS.JS NETWORK TOPOLOGY PREVIEW
-        // ============================================
-
-        function previewTopology() {
-            const modal = new bootstrap.Modal(document.getElementById('topologyPreviewModal'));
-            modal.show();
-
-            // Wait for modal to be shown before rendering
-            document.getElementById('topologyPreviewModal').addEventListener('shown.bs.modal', function () {
-                renderVisJsTopology();
-            }, { once: true });
-        }
-
-        function renderVisJsTopology() {
-            const container = document.getElementById('networkDiagram');
-
-            // Create nodes array
-            const nodesArray = [];
-            const edgesArray = [];
-
-            // Add Fusion routers as nodes
-            fusionRouters.forEach(router => {
-                nodesArray.push({
-                    id: `fusion_${router.router_id}`,
-                    label: router.hostname,
-                    shape: 'box',
-                    color: {
-                        border: '#667eea',
-                        background: '#e8eaf6',
-                        highlight: {
-                            border: '#5568d3',
-                            background: '#c5cae9'
-                        }
-                    },
-                    font: { size: 16, face: 'Arial', bold: true },
-                    margin: 10,
-                    widthConstraint: { minimum: 150, maximum: 200 }
-                });
-            });
-
-            // Add Border nodes as nodes
-            borderNodeConfigs.forEach((borderNode, idx) => {
-                nodesArray.push({
-                    id: `border_${idx}`,
-                    label: borderNode.hostname,
-                    shape: 'ellipse',
-                    color: {
-                        border: '#764ba2',
-                        background: '#f3e5f5',
-                        highlight: {
-                            border: '#653a8a',
-                            background: '#e1bee7'
-                        }
-                    },
-                    font: { size: 16, face: 'Arial', bold: true },
-                    margin: 10
-                });
-            });
-
-            // Add connections as edges
-            Object.keys(connectionConfigs).forEach(key => {
-                const config = connectionConfigs[key];
-                const borderIdx = borderNodeConfigs.findIndex(bn => bn.hostname === config.border_hostname);
-
-                let fusionInterfaceLabel = '';
-                if (config.interface_mode === 'routed') {
-                    fusionInterfaceLabel = config.interface_name || '';
-                } else if (config.interface_mode === 'svi') {
-                    fusionInterfaceLabel = `Vlan${config.vlan_id}`;
-                } else if (config.interface_mode === 'subinterface') {
-                    fusionInterfaceLabel = `${config.interface_name}.${config.subif_id}`;
-                }
-
-                const edgeLabel = `VLAN ${config.border_vlan_id}\\n${config.border_ip} -> ${config.fusion_ip}\\n${fusionInterfaceLabel}`;
-
-                edgesArray.push({
-                    from: `border_${borderIdx}`,
-                    to: `fusion_${config.fusion_router_id}`,
-                    label: edgeLabel,
-                    arrows: 'to',
-                    color: { color: '#667eea', highlight: '#5568d3' },
-                    font: { size: 11, align: 'middle', background: 'white' },
-                    smooth: { type: 'cubicBezier' }
-                });
-            });
-
-            // Create vis.js network
-            const nodes = new vis.DataSet(nodesArray);
-            const edges = new vis.DataSet(edgesArray);
-
-            const data = {
-                nodes: nodes,
-                edges: edges
-            };
-
-            const options = {
-                layout: {
-                    hierarchical: {
-                        direction: 'LR',
-                        sortMethod: 'directed',
-                        levelSeparation: 300,
-                        nodeSpacing: 150
-                    }
-                },
-                physics: {
-                    enabled: false
-                },
-                edges: {
-                    smooth: {
-                        type: 'cubicBezier',
-                        forceDirection: 'horizontal',
-                        roundness: 0.4
-                    },
-                    width: 2
-                },
-                interaction: {
-                    dragNodes: true,
-                    dragView: true,
-                    zoomView: true
-                }
-            };
-
-            const network = new vis.Network(container, data, options);
-        }
-
-        // ============================================
-        // ARCHIVED: OLD SVG-BASED TOPOLOGY FUNCTIONS
-        // (Kept for reference, not called in new design)
-        // ============================================
-
-        /*
         function initializeTopologyDiagram() {
             connectionConfigs = {};
             zoomLevel = 1.0;
             panX = 0;
             panY = 0;
 
+            // Set initial view to all routers if multiple, or specific router if only one
             if (fusionRouters.length === 1) {
                 currentFusionRouterView = fusionRouters[0].router_id;
             } else {
-                currentFusionRouterView = null;
+                currentFusionRouterView = null; // Show all routers
             }
 
             renderRouterViewSelector();
@@ -2219,15 +1696,7 @@
             renderTopologyDiagram();
             initializePanZoom();
         }
-        */
 
-        // ============================================
-        // ARCHIVED: OLD SVG-BASED RENDERING FUNCTIONS
-        // These functions are kept for reference but are no longer used
-        // The new table-based interface uses renderBorderNodeTables() instead
-        // ============================================
-
-        /*
         function renderRouterViewSelector() {
             const selector = document.getElementById('routerViewSelector');
             const buttonsContainer = document.getElementById('routerViewButtons');
@@ -3086,8 +2555,6 @@
             updateZoomDisplay();
         }
 
-        // End of zoom and pan functions
-
         // ============================================
         // CONNECTION MANAGEMENT
         // ============================================
@@ -3120,7 +2587,8 @@
             }
 
             delete connectionConfigs[connectionKey];
-            renderBorderNodeTables();
+            renderSidebarInterfaces();
+            renderTopologyDiagram();
         }
 
         function openConnectionModalFromData() {
@@ -3270,8 +2738,9 @@
             const modal = bootstrap.Modal.getInstance(document.getElementById('connectionModal'));
             modal.hide();
 
-            // Re-render table to update visual state
-            renderBorderNodeTables();
+            // Re-render sidebar and diagram to update visual state
+            renderSidebarInterfaces();
+            renderTopologyDiagram();
         }
 
         function calculateFusionIP(borderNodeIP) {
@@ -3293,7 +2762,7 @@
             handoffs = [];
 
             if (Object.keys(connectionConfigs).length === 0) {
-                alert('Please configure at least one interface handoff by selecting a Fusion router and interface.');
+                alert('Please configure at least one connection by dragging an interface to a fusion router.');
                 return;
             }
 
