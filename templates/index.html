@@ -2074,11 +2074,31 @@
                 return;
             }
 
-            // Store current connection for modal
-            currentConnection = existingConfig;
+            // Get fusion router details
+            const fusionRouter = fusionRouters.find(r => r.router_id === existingConfig.fusion_router_id);
+            if (!fusionRouter) {
+                alert('Fusion router not found.');
+                return;
+            }
 
-            // Open the existing connection modal for detailed configuration
-            openConnectionModal(borderNode.hostname, vlan.vlan, vlan.ip_address, vlan.vrf, vlan.subnet_mask);
+            // Create connection key
+            const connectionKey = `${borderNode.hostname}_${vlan.vlan}_${existingConfig.fusion_router_id}`;
+
+            // Store current connection for modal with all required properties
+            currentConnection = {
+                key: connectionKey,
+                borderHostname: borderNode.hostname,
+                borderVlan: vlan.vlan,
+                borderIp: vlan.ip_address,
+                borderVrf: vlan.vrf,
+                subnetMask: vlan.subnet_mask,
+                fusionRouterId: existingConfig.fusion_router_id,
+                fusionHostname: fusionRouter.hostname,
+                fusionIp: existingConfig.fusion_ip
+            };
+
+            // Open the connection modal for detailed configuration
+            openConnectionModalFromData();
         }
 
         function deleteConnectionFromTable(borderNodeIdx, vlanIdx) {
