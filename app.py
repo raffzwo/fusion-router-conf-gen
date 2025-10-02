@@ -869,21 +869,43 @@ def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, 
 
         # Build interface configuration based on mode
         if interface_mode == 'routed':
-            # Direct L3 interface
-            interface_data = {
-                'type': 'routed',
-                'name': handoff['interface_name'],
-                'ip_address': fusion_ip,
-                'subnet_mask': vlan_info['subnet_mask'],
-                'description': f"Handoff to {bn_hostname} VLAN{border_vlan_id}",
-                'vrf': handoff['vrf_name'],
-                'bfd_enabled': vlan_info['bfd_enabled'],
-                'bfd_interval': vlan_info['bfd_interval'],
-                'bfd_min_rx': vlan_info['bfd_min_rx'],
-                'bfd_multiplier': vlan_info['bfd_multiplier']
-            }
-            interfaces_config.append(interface_data)
-            source_interface = handoff['interface_name']
+            # Check if subinterface ID is provided
+            subif_id = handoff.get('subif_id', '').strip()
+
+            if subif_id:
+                # Routed subinterface
+                interface_data = {
+                    'type': 'subinterface',
+                    'parent_interface': handoff['interface_name'],
+                    'subif_id': subif_id,
+                    'encapsulation': f"dot1Q {subif_id}",
+                    'ip_address': fusion_ip,
+                    'subnet_mask': vlan_info['subnet_mask'],
+                    'description': f"Subif to {bn_hostname} VLAN{border_vlan_id}",
+                    'vrf': handoff['vrf_name'],
+                    'bfd_enabled': vlan_info['bfd_enabled'],
+                    'bfd_interval': vlan_info['bfd_interval'],
+                    'bfd_min_rx': vlan_info['bfd_min_rx'],
+                    'bfd_multiplier': vlan_info['bfd_multiplier']
+                }
+                interfaces_config.append(interface_data)
+                source_interface = f"{handoff['interface_name']}.{subif_id}"
+            else:
+                # Direct L3 interface (physical)
+                interface_data = {
+                    'type': 'routed',
+                    'name': handoff['interface_name'],
+                    'ip_address': fusion_ip,
+                    'subnet_mask': vlan_info['subnet_mask'],
+                    'description': f"Handoff to {bn_hostname} VLAN{border_vlan_id}",
+                    'vrf': handoff['vrf_name'],
+                    'bfd_enabled': vlan_info['bfd_enabled'],
+                    'bfd_interval': vlan_info['bfd_interval'],
+                    'bfd_min_rx': vlan_info['bfd_min_rx'],
+                    'bfd_multiplier': vlan_info['bfd_multiplier']
+                }
+                interfaces_config.append(interface_data)
+                source_interface = handoff['interface_name']
 
         elif interface_mode == 'svi':
             # SVI mode: VLAN interface + physical trunk

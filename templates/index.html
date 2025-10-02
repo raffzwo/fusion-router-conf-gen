@@ -1162,7 +1162,7 @@
         </div>
 
         <!-- Connection Configuration Modal -->
-        <div class="modal fade" id="connectionModal" tabindex="-1" aria-labelledby="connectionModalLabel" aria-hidden="true">
+        <div class="modal fade" id="connectionModal" tabindex="-1" aria-labelledby="connectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1955,47 +1955,33 @@
             const vlan = borderNode.vlan_interfaces[vlanIdx];
             const interfaceContainer = document.getElementById(`fusionInterfaceContainer_${borderNodeIdx}_${vlanIdx}`);
 
-            // Get available interfaces based on interface mode
-            let interfaceOptions = '';
+            // Get placeholder text based on interface mode
+            let placeholderText = '';
+            let existingValue = '';
 
             if (currentInterfaceMode === 'routed') {
-                // Physical interfaces
-                const physicalInterfaces = ['GigabitEthernet0/0/0', 'GigabitEthernet0/0/1', 'GigabitEthernet0/0/2', 'GigabitEthernet0/0/3'];
-                interfaceOptions = physicalInterfaces.map(intf => `
-                    <option value="${intf}" ${existingConfig && existingConfig.interface_name === intf ? 'selected' : ''}>
-                        ${intf}
-                    </option>
-                `).join('');
+                placeholderText = 'e.g., GigabitEthernet0/0/0';
+                if (existingConfig) {
+                    existingValue = existingConfig.interface_name || '';
+                }
             } else if (currentInterfaceMode === 'svi') {
-                // SVI interfaces
-                for (let i = 10; i <= 50; i += 10) {
-                    interfaceOptions += `
-                        <option value="Vlan${i}" ${existingConfig && existingConfig.vlan_id === i ? 'selected' : ''}>
-                            Vlan${i}
-                        </option>
-                    `;
+                placeholderText = 'e.g., Vlan10';
+                if (existingConfig && existingConfig.vlan_id) {
+                    existingValue = `Vlan${existingConfig.vlan_id}`;
                 }
             } else if (currentInterfaceMode === 'subinterface') {
-                // Subinterfaces
-                const parentInterfaces = ['GigabitEthernet0/0/0', 'GigabitEthernet0/0/1'];
-                parentInterfaces.forEach(parent => {
-                    for (let subId = 10; subId <= 100; subId += 10) {
-                        const fullName = `${parent}.${subId}`;
-                        interfaceOptions += `
-                            <option value="${fullName}" ${existingConfig && existingConfig.interface_name === parent && existingConfig.subif_id === subId ? 'selected' : ''}>
-                                ${fullName}
-                            </option>
-                        `;
-                    }
-                });
+                placeholderText = 'e.g., GigabitEthernet0/0/0.10';
+                if (existingConfig && existingConfig.interface_name && existingConfig.subif_id) {
+                    existingValue = `${existingConfig.interface_name}.${existingConfig.subif_id}`;
+                }
             }
 
             interfaceContainer.innerHTML = `
-                <select class="form-select form-select-sm" id="fusionInterface_${borderNodeIdx}_${vlanIdx}"
-                        onchange="handleInterfaceSelection(${borderNodeIdx}, ${vlanIdx}, ${fusionRouterId})">
-                    <option value="">-- Select Interface --</option>
-                    ${interfaceOptions}
-                </select>
+                <input type="text" class="form-control form-control-sm" id="fusionInterface_${borderNodeIdx}_${vlanIdx}"
+                       placeholder="${placeholderText}"
+                       value="${existingValue}"
+                       onblur="handleInterfaceSelection(${borderNodeIdx}, ${vlanIdx}, ${fusionRouterId})"
+                       onkeypress="if(event.key === 'Enter') { this.blur(); }">
             `;
 
             // If there's an existing configuration, trigger interface selection
@@ -2007,8 +1993,8 @@
         function handleInterfaceSelection(borderNodeIdx, vlanIdx, fusionRouterId) {
             const borderNode = borderNodeConfigs[borderNodeIdx];
             const vlan = borderNode.vlan_interfaces[vlanIdx];
-            const interfaceSelect = document.getElementById(`fusionInterface_${borderNodeIdx}_${vlanIdx}`);
-            const selectedInterface = interfaceSelect.value;
+            const interfaceInput = document.getElementById(`fusionInterface_${borderNodeIdx}_${vlanIdx}`);
+            const selectedInterface = interfaceInput.value.trim();
 
             if (!selectedInterface) {
                 // Disable config button if no interface selected
@@ -2037,17 +2023,30 @@
                 interface_mode: currentInterfaceMode
             };
 
-            // Add mode-specific fields
+            // Add mode-specific fields based on interface mode and user input
             if (currentInterfaceMode === 'routed') {
                 config.interface_name = selectedInterface;
             } else if (currentInterfaceMode === 'svi') {
-                const vlanId = parseInt(selectedInterface.replace('Vlan', ''));
-                config.vlan_id = vlanId;
+                // Extract VLAN ID from input (e.g., "Vlan10" -> 10)
+                const vlanMatch = selectedInterface.match(/Vlan(\d+)/i);
+                if (vlanMatch) {
+                    config.vlan_id = parseInt(vlanMatch[1]);
+                } else {
+                    // If user just typed a number, assume it's the VLAN ID
+                    const numericVlan = parseInt(selectedInterface);
+                    config.vlan_id = isNaN(numericVlan) ? 10 : numericVlan;
+                }
                 config.physical_interface = 'GigabitEthernet0/0/0'; // Default
             } else if (currentInterfaceMode === 'subinterface') {
+                // Parse subinterface (e.g., "GigabitEthernet0/0/0.10")
                 const parts = selectedInterface.split('.');
-                config.interface_name = parts[0];
-                config.subif_id = parseInt(parts[1]);
+                if (parts.length === 2) {
+                    config.interface_name = parts[0];
+                    config.subif_id = parseInt(parts[1]);
+                } else {
+                    // Invalid format, use as-is for routed interface
+                    config.interface_name = selectedInterface;
+                }
             }
 
             // Store in connectionConfigs
@@ -2122,87 +2121,128 @@
         // ============================================
 
         function previewTopology() {
-            const modal = new bootstrap.Modal(document.getElementById('topologyPreviewModal'));
-            modal.show();
+            const modalElement = document.getElementById('topologyPreviewModal');
+            const modal = new bootstrap.Modal(modalElement);
 
-            // Wait for modal to be shown before rendering
-            document.getElementById('topologyPreviewModal').addEventListener('shown.bs.modal', function () {
-                renderVisJsTopology();
+            // Attach event listener before showing modal
+            modalElement.addEventListener('shown.bs.modal', function () {
+                try {
+                    renderVisJsTopology();
+                } catch (error) {
+                    console.error('Error rendering topology:', error);
+                    alert('Failed to render network diagram. Please check the console for details.');
+                }
             }, { once: true });
+
+            modal.show();
         }
 
         function renderVisJsTopology() {
             const container = document.getElementById('networkDiagram');
 
+            // Clear any existing content
+            container.innerHTML = '';
+
+            // Check if vis is loaded
+            if (typeof vis === 'undefined') {
+                console.error('vis.js library not loaded');
+                container.innerHTML = '<div style="padding: 20px; text-align: center;">Error: Visualization library not loaded. Please refresh the page.</div>';
+                return;
+            }
+
             // Create nodes array
             const nodesArray = [];
             const edgesArray = [];
 
+            // Check if there's any data to display
+            if (!fusionRouters || fusionRouters.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No fusion routers configured yet. Please add at least one fusion router.</div>';
+                return;
+            }
+
+            if (!borderNodeConfigs || borderNodeConfigs.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No border nodes configured yet. Please upload border node configurations.</div>';
+                return;
+            }
+
             // Add Fusion routers as nodes
             fusionRouters.forEach(router => {
-                nodesArray.push({
-                    id: `fusion_${router.router_id}`,
-                    label: router.hostname,
-                    shape: 'box',
-                    color: {
-                        border: '#667eea',
-                        background: '#e8eaf6',
-                        highlight: {
-                            border: '#5568d3',
-                            background: '#c5cae9'
-                        }
-                    },
-                    font: { size: 16, face: 'Arial', bold: true },
-                    margin: 10,
-                    widthConstraint: { minimum: 150, maximum: 200 }
-                });
+                if (router && router.router_id && router.hostname) {
+                    nodesArray.push({
+                        id: `fusion_${router.router_id}`,
+                        label: router.hostname,
+                        shape: 'box',
+                        color: {
+                            border: '#667eea',
+                            background: '#e8eaf6',
+                            highlight: {
+                                border: '#5568d3',
+                                background: '#c5cae9'
+                            }
+                        },
+                        font: { size: 16, face: 'Arial', bold: true },
+                        margin: 10,
+                        widthConstraint: { minimum: 150, maximum: 200 }
+                    });
+                }
             });
 
             // Add Border nodes as nodes
             borderNodeConfigs.forEach((borderNode, idx) => {
-                nodesArray.push({
-                    id: `border_${idx}`,
-                    label: borderNode.hostname,
-                    shape: 'ellipse',
-                    color: {
-                        border: '#764ba2',
-                        background: '#f3e5f5',
-                        highlight: {
-                            border: '#653a8a',
-                            background: '#e1bee7'
-                        }
-                    },
-                    font: { size: 16, face: 'Arial', bold: true },
-                    margin: 10
-                });
+                if (borderNode && borderNode.hostname) {
+                    nodesArray.push({
+                        id: `border_${idx}`,
+                        label: borderNode.hostname,
+                        shape: 'ellipse',
+                        color: {
+                            border: '#764ba2',
+                            background: '#f3e5f5',
+                            highlight: {
+                                border: '#653a8a',
+                                background: '#e1bee7'
+                            }
+                        },
+                        font: { size: 16, face: 'Arial', bold: true },
+                        margin: 10
+                    });
+                }
             });
 
             // Add connections as edges
-            Object.keys(connectionConfigs).forEach(key => {
-                const config = connectionConfigs[key];
-                const borderIdx = borderNodeConfigs.findIndex(bn => bn.hostname === config.border_hostname);
+            if (connectionConfigs && Object.keys(connectionConfigs).length > 0) {
+                Object.keys(connectionConfigs).forEach(key => {
+                    const config = connectionConfigs[key];
+                    if (!config || !config.border_hostname || !config.fusion_router_id) {
+                        return; // Skip invalid configs
+                    }
 
-                let fusionInterfaceLabel = '';
-                if (config.interface_mode === 'routed') {
-                    fusionInterfaceLabel = config.interface_name || '';
-                } else if (config.interface_mode === 'svi') {
-                    fusionInterfaceLabel = `Vlan${config.vlan_id}`;
-                } else if (config.interface_mode === 'subinterface') {
-                    fusionInterfaceLabel = `${config.interface_name}.${config.subif_id}`;
-                }
+                    const borderIdx = borderNodeConfigs.findIndex(bn => bn.hostname === config.border_hostname);
+                    if (borderIdx === -1) {
+                        return; // Skip if border node not found
+                    }
 
-                const edgeLabel = `VLAN ${config.border_vlan_id}\\n${config.border_ip} -> ${config.fusion_ip}\\n${fusionInterfaceLabel}`;
+                    let fusionInterfaceLabel = '';
+                    if (config.interface_mode === 'routed') {
+                        fusionInterfaceLabel = config.interface_name || '';
+                    } else if (config.interface_mode === 'svi') {
+                        fusionInterfaceLabel = `Vlan${config.vlan_id}`;
+                    } else if (config.interface_mode === 'subinterface') {
+                        fusionInterfaceLabel = `${config.interface_name}.${config.subif_id}`;
+                    }
 
-                edgesArray.push({
-                    from: `border_${borderIdx}`,
-                    to: `fusion_${config.fusion_router_id}`,
-                    label: edgeLabel,
-                    arrows: 'to',
-                    color: { color: '#667eea', highlight: '#5568d3' },
-                    font: { size: 11, align: 'middle', background: 'white' },
-                    smooth: { type: 'cubicBezier' }
+                    const edgeLabel = `VLAN ${config.border_vlan_id}\\n${config.border_ip} -> ${config.fusion_ip}\\n${fusionInterfaceLabel}`;
+
+                    edgesArray.push({
+                        from: `border_${borderIdx}`,
+                        to: `fusion_${config.fusion_router_id}`,
+                        label: edgeLabel,
+                        arrows: 'to',
+                        color: { color: '#667eea', highlight: '#5568d3' },
+                        font: { size: 11, align: 'middle', background: 'white' },
+                        smooth: { type: 'cubicBezier' }
+                    });
                 });
-            });
+            }
 
             // Create vis.js network
             const nodes = new vis.DataSet(nodesArray);
@@ -2240,7 +2280,14 @@
                 }
             };
 
-            const network = new vis.Network(container, data, options);
+            // Create the network visualization
+            try {
+                const network = new vis.Network(container, data, options);
+                console.log('Network diagram rendered successfully');
+            } catch (error) {
+                console.error('Error creating vis.Network:', error);
+                container.innerHTML = '<div style="padding: 20px; text-align: center;">Error rendering network diagram. Please try again.</div>';
+            }
         }
 
         // ============================================
@@ -3199,13 +3246,20 @@
 
             if (currentInterfaceMode === 'routed') {
                 html += `
-                    <div class="col-12 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">Fusion Interface *</label>
                         <input type="text" class="form-control" id="modal_interface"
                                placeholder="GigabitEthernet0/0/1"
                                value="${existingConfig ? existingConfig.interface_name : ''}"
                                required>
                         <div class="form-text">Physical interface on fusion router</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Subinterface ID</label>
+                        <input type="text" class="form-control" id="modal_routed_subif_id"
+                               placeholder="${currentConnection.borderVlan}"
+                               value="${existingConfig ? existingConfig.subif_id : ''}">
+                        <div class="form-text">Optional subinterface number (leave empty for physical interface)</div>
                     </div>
                 `;
             } else if (currentInterfaceMode === 'svi') {
@@ -3280,9 +3334,14 @@
 
             if (currentInterfaceMode === 'routed') {
                 config.interface_name = document.getElementById('modal_interface').value.trim();
+                const subifId = document.getElementById('modal_routed_subif_id').value.trim();
                 if (!config.interface_name) {
                     alert('Interface name is required');
                     return;
+                }
+                // Add subinterface ID if provided
+                if (subifId) {
+                    config.subif_id = subifId;
                 }
             } else if (currentInterfaceMode === 'svi') {
                 config.vlan_id = document.getElementById('modal_vlan_id').value.trim();
