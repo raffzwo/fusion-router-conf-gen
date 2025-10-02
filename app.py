@@ -882,7 +882,7 @@ def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, 
                     'ip_address': fusion_ip,
                     'subnet_mask': vlan_info['subnet_mask'],
                     'description': f"Subif to {bn_hostname} VLAN{border_vlan_id}",
-                    'vrf': handoff['vrf_name'],
+                    'vrf': handoff.get('vrf_name'),
                     'bfd_enabled': vlan_info['bfd_enabled'],
                     'bfd_interval': vlan_info['bfd_interval'],
                     'bfd_min_rx': vlan_info['bfd_min_rx'],
@@ -898,7 +898,7 @@ def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, 
                     'ip_address': fusion_ip,
                     'subnet_mask': vlan_info['subnet_mask'],
                     'description': f"Handoff to {bn_hostname} VLAN{border_vlan_id}",
-                    'vrf': handoff['vrf_name'],
+                    'vrf': handoff.get('vrf_name'),
                     'bfd_enabled': vlan_info['bfd_enabled'],
                     'bfd_interval': vlan_info['bfd_interval'],
                     'bfd_min_rx': vlan_info['bfd_min_rx'],
@@ -935,7 +935,7 @@ def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, 
                 'ip_address': fusion_ip,
                 'subnet_mask': vlan_info['subnet_mask'],
                 'description': f"L3 Handoff to {bn_hostname} VLAN{border_vlan_id}",
-                'vrf': handoff['vrf_name'],
+                'vrf': handoff.get('vrf_name'),
                 'bfd_enabled': vlan_info['bfd_enabled'],
                 'bfd_interval': vlan_info['bfd_interval'],
                 'bfd_min_rx': vlan_info['bfd_min_rx'],
@@ -957,7 +957,7 @@ def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, 
                 'ip_address': fusion_ip,
                 'subnet_mask': vlan_info['subnet_mask'],
                 'description': f"Subif to {bn_hostname} VLAN{border_vlan_id}",
-                'vrf': handoff['vrf_name'],
+                'vrf': handoff.get('vrf_name'),
                 'bfd_enabled': vlan_info['bfd_enabled'],
                 'bfd_interval': vlan_info['bfd_interval'],
                 'bfd_min_rx': vlan_info['bfd_min_rx'],
@@ -968,18 +968,21 @@ def generate_fusion_router_config(fusion_router_params, border_nodes, handoffs, 
 
         # Prepare BGP neighbor configuration
         # Enable next-hop-self for eBGP neighbors when iBGP is configured
+        # Use single VRF name (same on both sides for eBGP)
+        vrf_name = handoff.get('vrf_name')
+
         neighbor_data = {
             'ip': vlan_info['ip_address'],  # Border node IP
             'remote_as': border_node['bgp']['as_number'],
             'source_interface': source_interface,
-            'vrf': handoff['vrf_name'],
+            'vrf': vrf_name,
             'next_hop_self': ibgp_config and ibgp_config.get('enabled', False)
         }
 
-        if handoff['vrf_name']:
-            if handoff['vrf_name'] not in bgp_neighbors_vrf:
-                bgp_neighbors_vrf[handoff['vrf_name']] = []
-            bgp_neighbors_vrf[handoff['vrf_name']].append(neighbor_data)
+        if vrf_name:
+            if vrf_name not in bgp_neighbors_vrf:
+                bgp_neighbors_vrf[vrf_name] = []
+            bgp_neighbors_vrf[vrf_name].append(neighbor_data)
         else:
             bgp_neighbors_default.append(neighbor_data)
 

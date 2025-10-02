@@ -265,8 +265,19 @@ router bgp {{ as_number }}
   neighbor {{ neighbor.ip }} next-hop-self
 {%- endif %}
 {%- endfor %}
-  ! Note: NO iBGP neighbors in VRF address-families when using VPNv4
-  ! VRF routes are exchanged via VPNv4 address-family with Route Targets
+{%- if ibgp_config and ibgp_config.enabled and ibgp_config.use_vpnv4 %}
+  ! Note: iBGP peers are NOT configured in VRF address-families when using VPNv4
+  ! VRF routes are exchanged via VPNv4 address-family in global table with Route Targets
+{%- elif ibgp_config and ibgp_config.enabled and not ibgp_config.use_vpnv4 %}
+  ! iBGP neighbor for VRF route exchange (non-VPNv4 mode)
+  neighbor {{ ibgp_config.peer_ip }} remote-as {{ as_number }}
+  neighbor {{ ibgp_config.peer_ip }} description iBGP peer - {{ ibgp_config.peer_hostname }}
+  neighbor {{ ibgp_config.peer_ip }} update-source {{ ibgp_config.update_source }}
+  neighbor {{ ibgp_config.peer_ip }} fall-over bfd
+  neighbor {{ ibgp_config.peer_ip }} activate
+  neighbor {{ ibgp_config.peer_ip }} send-community both
+  neighbor {{ ibgp_config.peer_ip }} next-hop-self
+{%- endif %}
  exit-address-family
 {%- endfor %}
 {%- endif %}
