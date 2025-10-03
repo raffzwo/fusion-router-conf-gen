@@ -42,3 +42,9 @@ outputs/*.json
 # Test files
 test_*.py
 debug_*.py
+
+# Text files
+*.txt
+
+# Shell scripts
+*.sh
